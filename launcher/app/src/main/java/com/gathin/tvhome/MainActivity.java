@@ -55,6 +55,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -258,7 +259,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         sourcePanelAction = cfg.sourcePanelAction;
 
         root = findViewById(R.id.root);
-        root.setBackgroundColor(cfg.backgroundColor);
+        root.setBackgroundResource(R.drawable.default_wallpaper_gradient);
+        if (cfg.backgroundColor != 0 && cfg.backgroundColor != 0xFF000000) {
+            root.setBackgroundColor(cfg.backgroundColor);
+        }
         if (cfg.wallpaper != null) showWallpaper(cfg.wallpaper);
         sky = findViewById(R.id.sky);
         sky.setIntensity(cfg.skyIntensity);
@@ -1297,6 +1301,263 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         return true;
     }
 
+    @Override
+    public void onTileMenuRequested(View anchor, int position, AppAdapter.Entry entry) {
+        if (entry == null || entry.pkg == null) return;
+        showAppTileMenu(anchor, position, entry);
+    }
+
+    private void showAppTileMenu(View anchor, int position, AppAdapter.Entry entry) {
+        if (isFinishing() || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && isDestroyed())) return;
+        final Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+
+        LinearLayout panel = new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setBackgroundResource(R.drawable.glass_panel);
+        int pad = (int) (18 * density);
+        panel.setPadding(pad, pad, pad, pad);
+        panel.setElevation(14 * density);
+
+        // Header: App Label
+        TextView title = new TextView(this);
+        title.setText(entry.label != null ? entry.label : entry.pkg);
+        title.setTextColor(Color.WHITE);
+        title.setTextSize(18f);
+        title.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        title.setPadding(0, 0, 0, (int) (4 * density));
+        panel.addView(title);
+
+        // Subtitle: Package Name
+        TextView subtitle = new TextView(this);
+        subtitle.setText(entry.pkg);
+        subtitle.setTextColor(Color.parseColor("#80FFFFFF"));
+        subtitle.setTextSize(12f);
+        subtitle.setPadding(0, 0, 0, (int) (14 * density));
+        panel.addView(subtitle);
+
+        // Divider
+        View div = new View(this);
+        div.setBackgroundColor(Color.parseColor("#26FFFFFF"));
+        panel.addView(div, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (int) (1 * density)));
+
+        LinearLayout optionsList = new LinearLayout(this);
+        optionsList.setOrientation(LinearLayout.VERTICAL);
+        optionsList.setPadding(0, (int) (8 * density), 0, 0);
+        panel.addView(optionsList);
+
+        final boolean isDocked = adapter.isDocked(entry.pkg);
+
+        // Option 1: Pin to Dock / Remove from Dock
+        String dockActionText = isDocked ? "Remove from Dock" : "Pin to Dock";
+        addMenuActionRow(optionsList, dialog, dockActionText, () -> {
+            if (isDocked) {
+                adapter.removeFromDock(entry.pkg);
+            } else {
+                adapter.pinToDock(entry.pkg);
+            }
+            dockApps = adapter.getDockApps();
+            hiddenApps = new HashSet<>(adapter.getHiddenApps());
+            Config.saveDockAndHidden(this, dockApps, adapter.getHiddenApps());
+            reloadApps(false);
+            Toast.makeText(this, isDocked ? "Removed from Dock" : "Pinned to Dock", Toast.LENGTH_SHORT).show();
+        });
+
+        // Option 2: Move Left (if position > 0)
+        if (position > 0) {
+            addMenuActionRow(optionsList, dialog, "Move Left", () -> {
+                int target = position - 1;
+                adapter.moveItem(position, target);
+                List<String> keys = adapter.movableKeys();
+                Order order = new Order(Order.dockKey(dockApps), keys);
+                if (Order.save(Order.file(this), order)) {
+                    adapter.setSavedOrder(Order.ranks(order, dockApps));
+                }
+                focusTile(target);
+            });
+        }
+
+        // Option 3: Move Right (if position < adapter.appCount() - 1)
+        if (position < adapter.appCount() - 1) {
+            addMenuActionRow(optionsList, dialog, "Move Right", () -> {
+                int target = position + 1;
+                adapter.moveItem(position, target);
+                List<String> keys = adapter.movableKeys();
+                Order order = new Order(Order.dockKey(dockApps), keys);
+                if (Order.save(Order.file(this), order)) {
+                    adapter.setSavedOrder(Order.ranks(order, dockApps));
+                }
+                focusTile(target);
+            });
+        }
+
+        // Option 4: Hide App from Home
+        addMenuActionRow(optionsList, dialog, "Hide App from Home Screen", () -> {
+            adapter.hideApp(entry.pkg);
+            dockApps = adapter.getDockApps();
+            hiddenApps = new HashSet<>(adapter.getHiddenApps());
+            Config.saveDockAndHidden(this, dockApps, adapter.getHiddenApps());
+            reloadApps(false);
+            Toast.makeText(this, "App hidden. Access via 'Show Hidden Apps'", Toast.LENGTH_SHORT).show();
+        });
+
+        // Option 5: App Info & Settings
+        addMenuActionRow(optionsList, dialog, "App Info & Settings", () -> {
+            try {
+                Intent infoIntent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                infoIntent.setData(Uri.parse("package:" + entry.pkg));
+                infoIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(infoIntent);
+            } catch (Exception ex) {
+                try {
+                    Intent setIntent = new Intent(Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS);
+                    setIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(setIntent);
+                } catch (Exception ignored) {
+                    Toast.makeText(this, R.string.not_available, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        // Option 6: Show Hidden Apps (if any are hidden)
+        List<String> hidden = adapter.getHiddenApps();
+        if (hidden != null && !hidden.isEmpty()) {
+            addMenuActionRow(optionsList, dialog, "Show Hidden Apps (" + hidden.size() + ")", this::showUnhideDialog);
+        }
+
+        dialog.setContentView(panel);
+        Window w = dialog.getWindow();
+        if (w != null) {
+            w.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            w.setLayout((int) (380 * density), ViewGroup.LayoutParams.WRAP_CONTENT);
+            w.setDimAmount(0.6f);
+        }
+        dialog.show();
+        if (optionsList.getChildCount() > 0) {
+            optionsList.getChildAt(0).requestFocus();
+        }
+    }
+
+    private void addMenuActionRow(LinearLayout container, Dialog dialog, String text, Runnable action) {
+        FrameLayout row = new FrameLayout(this);
+        row.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, (int) (44 * density)));
+        row.setBackgroundResource(R.drawable.input_row_bg);
+        row.setFocusable(true);
+        row.setClickable(true);
+        row.setPadding((int) (14 * density), 0, (int) (14 * density), 0);
+
+        TextView tv = new TextView(this);
+        tv.setText(text);
+        tv.setTextSize(15f);
+        tv.setTextColor(getResources().getColorStateList(R.drawable.pill_text));
+        tv.setDuplicateParentStateEnabled(true);
+        tv.setGravity(Gravity.CENTER_VERTICAL);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        row.addView(tv, lp);
+
+        row.setOnClickListener(v -> {
+            dialog.dismiss();
+            if (action != null) action.run();
+        });
+        container.addView(row);
+    }
+
+    private void showUnhideDialog() {
+        if (isFinishing() || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && isDestroyed())) return;
+        final List<String> hiddenList = adapter.getHiddenApps();
+        if (hiddenList == null || hiddenList.isEmpty()) {
+            Toast.makeText(this, "No hidden apps", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        final Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+
+        LinearLayout panel = new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setBackgroundResource(R.drawable.glass_panel);
+        int pad = (int) (18 * density);
+        panel.setPadding(pad, pad, pad, pad);
+        panel.setElevation(14 * density);
+
+        TextView title = new TextView(this);
+        title.setText("Hidden Apps (" + hiddenList.size() + ")");
+        title.setTextColor(Color.WHITE);
+        title.setTextSize(18f);
+        title.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        title.setPadding(0, 0, 0, (int) (6 * density));
+        panel.addView(title);
+
+        TextView hint = new TextView(this);
+        hint.setText("Select an app to restore it to your Home Screen:");
+        hint.setTextColor(Color.parseColor("#99FFFFFF"));
+        hint.setTextSize(13f);
+        hint.setPadding(0, 0, 0, (int) (12 * density));
+        panel.addView(hint);
+
+        View div = new View(this);
+        div.setBackgroundColor(Color.parseColor("#26FFFFFF"));
+        panel.addView(div, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (int) (1 * density)));
+
+        ScrollView scroll = new ScrollView(this);
+        LinearLayout list = new LinearLayout(this);
+        list.setOrientation(LinearLayout.VERTICAL);
+        list.setPadding(0, (int) (6 * density), 0, 0);
+
+        android.content.pm.PackageManager pm = getPackageManager();
+        for (String pkg : hiddenList) {
+            String appName = pkg;
+            try {
+                android.content.pm.ApplicationInfo ai = pm.getApplicationInfo(pkg, 0);
+                CharSequence l = ai.loadLabel(pm);
+                if (l != null && l.length() > 0) appName = l.toString() + " (" + pkg + ")";
+            } catch (Exception ignored) {}
+
+            final String targetPkg = pkg;
+            addMenuActionRow(list, dialog, "Unhide " + appName, () -> {
+                adapter.unhideApp(targetPkg);
+                dockApps = adapter.getDockApps();
+                hiddenApps = new HashSet<>(adapter.getHiddenApps());
+                Config.saveDockAndHidden(this, dockApps, adapter.getHiddenApps());
+                reloadApps(false);
+                Toast.makeText(this, "Restored to Home Screen", Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        if (hiddenList.size() > 1) {
+            addMenuActionRow(list, dialog, "Restore All Hidden Apps", () -> {
+                for (String pkg : new ArrayList<>(hiddenList)) {
+                    adapter.unhideApp(pkg);
+                }
+                dockApps = adapter.getDockApps();
+                hiddenApps = new HashSet<>(adapter.getHiddenApps());
+                Config.saveDockAndHidden(this, dockApps, adapter.getHiddenApps());
+                reloadApps(false);
+                Toast.makeText(this, "Restored all apps to Home Screen", Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        scroll.addView(list);
+        LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f);
+        slp.height = Math.min((int) (260 * density), ViewGroup.LayoutParams.WRAP_CONTENT);
+        panel.addView(scroll, slp);
+
+        dialog.setContentView(panel);
+        Window w = dialog.getWindow();
+        if (w != null) {
+            w.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            w.setLayout((int) (400 * density), ViewGroup.LayoutParams.WRAP_CONTENT);
+            w.setDimAmount(0.6f);
+        }
+        dialog.show();
+        if (list.getChildCount() > 0) {
+            list.getChildAt(0).requestFocus();
+        }
+    }
+
     @Override public void onLibraryFocused() {
         libraryFocusPending = false;
         hideGlass();
@@ -1614,109 +1875,141 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      *  which the Live TV app handles; where nothing takes that, the configured `input_action` is sent
      *  with the same URI instead (XGIMI's HDMI player only answers com.xgimi.action.hdmiPlayer). */
     private void openInput(String inputId) {
-        Uri uri = TvContract.buildChannelUriForPassthroughInput(inputId);
-        Intent view = new Intent(Intent.ACTION_VIEW).setDataAndType(uri, "vnd.android.cursor.item/channel")
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         try {
-            startActivity(view);
-            return;
-        } catch (ActivityNotFoundException e) {
-            if (inputAction.isEmpty()) {
-                Toast.makeText(this, R.string.not_available, Toast.LENGTH_SHORT).show();
+            Uri uri = TvContract.buildChannelUriForPassthroughInput(inputId);
+            Intent view = new Intent(Intent.ACTION_VIEW).setDataAndType(uri, "vnd.android.cursor.item/channel")
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            try {
+                startActivity(view);
                 return;
+            } catch (ActivityNotFoundException e) {
+                if (!inputAction.isEmpty()) {
+                    open(new Intent(inputAction).setDataAndType(uri, "vnd.android.cursor.item/channel"));
+                    return;
+                }
             }
+            Toast.makeText(this, "No external hardware inputs detected on this device", Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Toast.makeText(this, "No external hardware inputs detected on this device", Toast.LENGTH_SHORT).show();
         }
-        open(new Intent(inputAction).setDataAndType(uri, "vnd.android.cursor.item/channel"));
     }
 
     /** Dropdown menu under the Inputs pill: HDMI ports (with connection state), AV and Live TV. */
     private void showInputs() {
-        View anchor = findViewById(R.id.btnInputs);
-        View panel = getLayoutInflater().inflate(R.layout.popup_inputs, root, false);
-        LinearLayout rows = panel.findViewById(R.id.rows);
+        try {
+            View anchor = findViewById(R.id.btnInputs);
+            View panel = getLayoutInflater().inflate(R.layout.popup_inputs, root, false);
+            LinearLayout rows = panel.findViewById(R.id.rows);
 
-        // Compact: as wide as the Inputs pill (a touch wider so "HDMI 1" fits), hanging right below it.
-        int width = Math.max(anchor.getWidth(), (int) (150 * density));
-        final PopupWindow popup = glassPopup(panel, width);
+            // Compact: as wide as the Inputs pill (a touch wider so "HDMI 1" fits), hanging right below it.
+            int width = Math.max(anchor.getWidth(), (int) (150 * density));
+            final PopupWindow popup = glassPopup(panel, width);
 
-        TvInputManager tim = (TvInputManager) getSystemService(TV_INPUT_SERVICE);
-        boolean sawNonHdmi = false;
-        String tunerId = null;
-        boolean tunerIsHw = false;
-        if (tim != null) {
-            List<TvInputInfo> inputs = new ArrayList<>(tim.getTvInputList());
-            // HDMI ports first in port order, then AV and the rest.
-            Collections.sort(inputs, (a, b) -> {
-                boolean ha = a.getType() == TvInputInfo.TYPE_HDMI, hb = b.getType() == TvInputInfo.TYPE_HDMI;
-                if (ha != hb) return ha ? -1 : 1;
-                return String.valueOf(a.loadLabel(this)).compareToIgnoreCase(String.valueOf(b.loadLabel(this)));
-            });
-            // Some TVs (Sony) report every HDMI port as connected whether or not anything is plugged in,
-            // so drop the HDMI status then. A TV with every port really in use loses it too.
-            int hdmiPorts = 0, hdmiConnected = 0;
-            for (TvInputInfo info : inputs) {
-                if (!info.isPassthroughInput() || info.getType() != TvInputInfo.TYPE_HDMI) continue;
-                hdmiPorts++;
-                if (tim.getInputState(info.getId()) == TvInputManager.INPUT_STATE_CONNECTED) hdmiConnected++;
-            }
-            boolean hdmiStateBogus = hdmiPorts > 1 && hdmiConnected == hdmiPorts;
-            for (TvInputInfo info : inputs) {
-                if (info.getType() == TvInputInfo.TYPE_TUNER
-                        && (info.getServiceInfo().applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0) {
-                    // Prefer a hardware tuner: the framework names those ".../HW<n>". System apps such as
-                    // AirPlay also register software inputs of type TUNER and may sort first (seen on TCL G05).
-                    boolean hw = info.getId().matches(".*/HW\\d+$");
-                    if (tunerId == null || (hw && !tunerIsHw) || (hw == tunerIsHw && info.getId().compareTo(tunerId) < 0)) {
-                        tunerId = info.getId();
-                        tunerIsHw = hw;
+            TvInputManager tim = (TvInputManager) getSystemService(TV_INPUT_SERVICE);
+            boolean sawNonHdmi = false;
+            String tunerId = null;
+            boolean tunerIsHw = false;
+            if (tim != null) {
+                try {
+                    List<TvInputInfo> inputs = new ArrayList<>(tim.getTvInputList());
+                    // HDMI ports first in port order, then AV and the rest.
+                    Collections.sort(inputs, (a, b) -> {
+                        boolean ha = a.getType() == TvInputInfo.TYPE_HDMI, hb = b.getType() == TvInputInfo.TYPE_HDMI;
+                        if (ha != hb) return ha ? -1 : 1;
+                        return String.valueOf(a.loadLabel(this)).compareToIgnoreCase(String.valueOf(b.loadLabel(this)));
+                    });
+                    // Some TVs (Sony) report every HDMI port as connected whether or not anything is plugged in,
+                    // so drop the HDMI status then. A TV with every port really in use loses it too.
+                    int hdmiPorts = 0, hdmiConnected = 0;
+                    for (TvInputInfo info : inputs) {
+                        if (!info.isPassthroughInput() || info.getType() != TvInputInfo.TYPE_HDMI) continue;
+                        hdmiPorts++;
+                        if (tim.getInputState(info.getId()) == TvInputManager.INPUT_STATE_CONNECTED) hdmiConnected++;
                     }
-                }
-                // Inputs hidden in the TV's Settings > Inputs stay out of the menu too.
-                if (!info.isPassthroughInput() || info.isHidden(this)) continue;
-                CharSequence l = info.loadLabel(this);
-                String label = l == null ? info.getId() : l.toString();
-                boolean hdmi = info.getType() == TvInputInfo.TYPE_HDMI;
-                if (hdmi && !label.toUpperCase(Locale.ROOT).contains("HDMI")) label = "HDMI " + label;
-                // The name given in Settings > Inputs (e.g. "MacBook Pro") goes first, the port after it.
-                CharSequence custom = info.loadCustomLabel(this);
-                if (custom != null && custom.length() > 0 && !custom.toString().equals(label)) {
-                    label = custom + " \u00B7 " + label;
-                }
-                final String id = info.getId();
-                int state = hdmi && hdmiStateBogus ? -1 : tim.getInputState(id);
-                if (!hdmi && rows.getChildCount() > 0 && !sawNonHdmi) addSeparator(rows);
-                if (!hdmi) sawNonHdmi = true;
-                addInputRow(rows, popup, hdmi ? R.drawable.ic_input : R.drawable.ic_av, label, state,
-                        () -> openInput(id));
+                    boolean hdmiStateBogus = hdmiPorts > 1 && hdmiConnected == hdmiPorts;
+                    for (TvInputInfo info : inputs) {
+                        if (info.getType() == TvInputInfo.TYPE_TUNER
+                                && (info.getServiceInfo().applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0) {
+                            // Prefer a hardware tuner: the framework names those ".../HW<n>". System apps such as
+                            // AirPlay also register software inputs of type TUNER and may sort first (seen on TCL G05).
+                            boolean hw = info.getId().matches(".*/HW\\d+$");
+                            if (tunerId == null || (hw && !tunerIsHw) || (hw == tunerIsHw && info.getId().compareTo(tunerId) < 0)) {
+                                tunerId = info.getId();
+                                tunerIsHw = hw;
+                            }
+                        }
+                        // Inputs hidden in the TV's Settings > Inputs stay out of the menu too.
+                        if (!info.isPassthroughInput() || info.isHidden(this)) continue;
+                        CharSequence l = info.loadLabel(this);
+                        String label = l == null ? info.getId() : l.toString();
+                        boolean hdmi = info.getType() == TvInputInfo.TYPE_HDMI;
+                        if (hdmi && !label.toUpperCase(Locale.ROOT).contains("HDMI")) label = "HDMI " + label;
+                        // The name given in Settings > Inputs (e.g. "MacBook Pro") goes first, the port after it.
+                        CharSequence custom = info.loadCustomLabel(this);
+                        if (custom != null && custom.length() > 0 && !custom.toString().equals(label)) {
+                            label = custom + " \u00B7 " + label;
+                        }
+                        final String id = info.getId();
+                        int state = hdmi && hdmiStateBogus ? -1 : tim.getInputState(id);
+                        if (!hdmi && rows.getChildCount() > 0 && !sawNonHdmi) addSeparator(rows);
+                        if (!hdmi) sawNonHdmi = true;
+                        addInputRow(rows, popup, hdmi ? R.drawable.ic_input : R.drawable.ic_av, label, state,
+                                () -> openInput(id));
+                    }
+                } catch (Exception ignored) {}
             }
-        }
-        // Nothing to list where there is no TvInputManager: the TV's own source panel switches inputs.
-        if (rows.getChildCount() == 0 && !sourcePanelService.isEmpty()) {
-            addInputRow(rows, popup, R.drawable.ic_input, getString(R.string.inputs), -1, this::openSourcePanel);
-        }
-        Intent liveTv = liveTvIntent();
-        if (liveTv != null && tunerId != null) {
-            liveTv = new Intent(Intent.ACTION_VIEW)
-                    .setDataAndType(TvContract.buildChannelUriForPassthroughInput(tunerId), "vnd.android.cursor.item/channel")
-                    .setPackage(liveTvPkg);
-        }
-        if (liveTv != null) {
-            if (rows.getChildCount() > 0) addSeparator(rows);
-            final Intent liveTvIntent = liveTv;
-            addInputRow(rows, popup, R.drawable.ic_livetv, getString(R.string.live_tv), -1, () -> open(liveTvIntent));
-        }
-        if (rows.getChildCount() == 0) {
-            Toast.makeText(this, R.string.no_inputs, Toast.LENGTH_SHORT).show();
-            return;
-        }
+            // Nothing to list where there is no TvInputManager: the TV's own source panel switches inputs.
+            if (rows.getChildCount() == 0 && !sourcePanelService.isEmpty()) {
+                addInputRow(rows, popup, R.drawable.ic_input, getString(R.string.inputs), -1, this::openSourcePanel);
+            }
+            // Fallback for common OEM hardware input switchers across brands (Sony, TCL, MiTV, Skyworth, etc.)
+            if (rows.getChildCount() == 0) {
+                Intent[] oemIntents = new Intent[] {
+                    new Intent("android.intent.action.MAIN").addCategory("android.intent.category.TV_INPUT"),
+                    new Intent("com.android.tv.action.VIEW_INPUTS"),
+                    new Intent("org.droidtv.intent.action.SOURCES"),
+                    new Intent().setComponent(new ComponentName("com.mediatek.tvinput", "com.mediatek.tvinput.InputSourceActivity")),
+                    new Intent().setComponent(new ComponentName("com.tcl.tvinput", "com.tcl.tvinput.SourceActivity")),
+                    new Intent().setComponent(new ComponentName("com.hisense.tv.inputsource", "com.hisense.tv.inputsource.MainActivity"))
+                };
+                for (Intent intent : oemIntents) {
+                    try {
+                        if (getPackageManager().resolveActivity(intent, 0) != null) {
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            addInputRow(rows, popup, R.drawable.ic_input, getString(R.string.inputs), -1, () -> {
+                                try { startActivity(intent); } catch (Exception ignored) {}
+                            });
+                            break;
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+            Intent liveTv = liveTvIntent();
+            if (liveTv != null && tunerId != null) {
+                liveTv = new Intent(Intent.ACTION_VIEW)
+                        .setDataAndType(TvContract.buildChannelUriForPassthroughInput(tunerId), "vnd.android.cursor.item/channel")
+                        .setPackage(liveTvPkg);
+            }
+            if (liveTv != null) {
+                if (rows.getChildCount() > 0) addSeparator(rows);
+                final Intent liveTvIntent = liveTv;
+                addInputRow(rows, popup, R.drawable.ic_livetv, getString(R.string.live_tv), -1, () -> open(liveTvIntent));
+            }
+            if (rows.getChildCount() == 0) {
+                Toast.makeText(this, "No external hardware inputs detected on this device", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-        // Fit the widest row: TVs that report a status on every port (Sony) would otherwise squeeze the names out.
-        panel.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
-        popup.setWidth(Math.max(width, Math.min(panel.getMeasuredWidth(), (int) (360 * density))));
+            // Fit the widest row: TVs that report a status on every port (Sony) would otherwise squeeze the names out.
+            panel.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+            popup.setWidth(Math.max(width, Math.min(panel.getMeasuredWidth(), (int) (360 * density))));
 
-        int alignment = getResources().getBoolean(R.bool.rtl_menu_bar) ? Gravity.END : Gravity.START;
-        dropIn(popup, panel, anchor, alignment);
-        rows.getChildAt(0).requestFocus();
+            int alignment = getResources().getBoolean(R.bool.rtl_menu_bar) ? Gravity.END : Gravity.START;
+            dropIn(popup, panel, anchor, alignment);
+            rows.getChildAt(0).requestFocus();
+        } catch (Exception e) {
+            Toast.makeText(this, "No external hardware inputs detected on this device", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private PopupWindow glassPopup(View panel, int width) {

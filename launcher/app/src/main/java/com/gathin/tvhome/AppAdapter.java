@@ -53,6 +53,9 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         /** Called for a D-pad direction key on a tile. Return true when handled (focus stays put). */
         boolean onTileVerticalKey(int position, int keyCode);
 
+        /** Called when long-press (or Menu key) is pressed on a tile to open remote customization menu. */
+        void onTileMenuRequested(View anchor, int position, Entry entry);
+
         void onLibraryRequested();
         void onLibraryFocused();
         void onLibraryUp();
@@ -174,7 +177,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     /** config dock_row: false makes the dock apps the first tiles of one plain grid (names shown, no empty slots). */
     private final boolean dockRow;
     /** Dock order (config.xml dock_apps, or a theme's config.json). */
-    private final List<String> favourites;
+    private List<String> favourites;
     /** Grid apps fill the dock slots dock_apps leaves free (config.xml, fill_dock). */
     private final boolean fillDock;
     /** Dock apps found at the last reload, and the empty slots after them. */
@@ -195,7 +198,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         this.ctx = ctx;
         this.listener = listener;
         this.dockSize = dockSize;
-        this.favourites = cfg.dockApps;
+        this.favourites = new ArrayList<>(cfg.dockApps);
         this.fillDock = cfg.fillDock;
         this.hidden = new HashSet<>(cfg.hiddenApps);
         this.animations = cfg.animations;
@@ -286,11 +289,49 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 fresh.add(new Entry(label, component, banner, icon));
             }
         }
+
+        // Determine effective dock apps (smart auto-populating dock fallback up to dockSize)
+        final List<String> effectiveDock = new ArrayList<>(favourites);
+        Set<String> installedPkgs = new HashSet<>();
+        for (Entry e : fresh) installedPkgs.add(e.pkg);
+
+        int installedFavourites = 0;
+        for (String fav : effectiveDock) {
+            if (installedPkgs.contains(fav)) installedFavourites++;
+        }
+
+        if (installedFavourites < dockSize) {
+            String[] universalPool = new String[]{
+                "org.smarttube.stable", "com.google.android.youtube.tv", "com.netflix.ninja",
+                "com.amazon.amazonvideo.livingroom", "in.startv.hotstar", "com.disney.disneyplus",
+                "app.netmirror.newtv", "tv.plex.labs.android", "org.jellyfin.androidtv",
+                "org.xbmc.kodi", "org.videolan.vlc", "org.courville.nova",
+                "com.spotify.tv.android", "com.apple.atve.androidtv.appletv"
+            };
+            for (String poolPkg : universalPool) {
+                if (installedFavourites >= dockSize) break;
+                if (installedPkgs.contains(poolPkg) && !effectiveDock.contains(poolPkg) && !hidden.contains(poolPkg)) {
+                    effectiveDock.add(poolPkg);
+                    installedFavourites++;
+                }
+            }
+        }
+
+        if (installedFavourites < dockSize) {
+            for (Entry e : fresh) {
+                if (installedFavourites >= dockSize) break;
+                if (!effectiveDock.contains(e.pkg) && !hidden.contains(e.pkg)) {
+                    effectiveDock.add(e.pkg);
+                    installedFavourites++;
+                }
+            }
+        }
+
         Collections.sort(fresh, (a, b) -> {
             // The owner's own order first; tiles it does not know (new installs) follow by the rule below.
             int saved = Order.compare(savedRanks, a.component.flattenToShortString(), b.component.flattenToShortString());
             if (saved != 0) return saved;
-            int fa = favourites.indexOf(a.pkg), fb = favourites.indexOf(b.pkg);
+            int fa = effectiveDock.indexOf(a.pkg), fb = effectiveDock.indexOf(b.pkg);
             if (fa >= 0 || fb >= 0) {
                 if (fa < 0) return 1;
                 if (fb < 0) return -1;
@@ -309,7 +350,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     ctx.getDrawable(R.drawable.ic_home_settings), null, 0));
         }
         docked = 0;
-        while (docked < fresh.size() && favourites.contains(fresh.get(docked).pkg)) docked++;
+        while (docked < fresh.size() && effectiveDock.contains(fresh.get(docked).pkg)) docked++;
         emptySlots = dockRow && !reordering ? DockSlots.empty(docked, dockSize, fresh.size(), fillDock) : 0;
         for (int i = 0; i < emptySlots; i++) {
             fresh.add(docked + i, new Entry(Entry.EMPTY, "", new ComponentName(ctx, "empty-dock-slot-" + i),
@@ -418,14 +459,64 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         }
         h.card.setOnClickListener(v -> launch(e));
         h.card.setOnLongClickListener(v -> {
-            Intent i = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + e.pkg));
-            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            try {
-                ctx.startActivity(i);
-            } catch (ActivityNotFoundException ignored) {
+            if (listener != null) {
+                listener.onTileMenuRequested(h.card, position, e);
+                return true;
             }
-            return true;
+            return false;
         });
+        h.card.setOnKeyListener((v, keyCode, event) -> {
+            if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                if (keyCode == KeyEvent.KEYCODE_MENU) {
+                    if (listener != null) {
+                        listener.onTileMenuRequested(h.card, position, e);
+                        return true;
+                    }
+                }
+            }
+            return false;
+        });
+    }
+
+    List<String> getDockApps() {
+        return new ArrayList<>(favourites);
+    }
+
+    List<String> getHiddenApps() {
+        return new ArrayList<>(hidden);
+    }
+
+    boolean isDocked(String pkg) {
+        return favourites != null && favourites.contains(pkg);
+    }
+
+    void pinToDock(String pkg) {
+        if (favourites == null) favourites = new ArrayList<>();
+        if (!favourites.contains(pkg)) {
+            favourites.add(0, pkg);
+        }
+    }
+
+    void removeFromDock(String pkg) {
+        if (favourites != null) {
+            favourites.remove(pkg);
+        }
+    }
+
+    void hideApp(String pkg) {
+        hidden.add(pkg);
+        if (favourites != null) favourites.remove(pkg);
+    }
+
+    void unhideApp(String pkg) {
+        hidden.remove(pkg);
+    }
+
+    void moveItem(int fromPos, int toPos) {
+        if (fromPos < 0 || toPos < 0 || fromPos >= items.size() || toPos >= items.size()) return;
+        Entry item = items.remove(fromPos);
+        items.add(toPos, item);
+        notifyItemMoved(fromPos, toPos);
     }
 
     /** Opens the tile's activity by explicit component, with no extras: a card can name nothing else. */

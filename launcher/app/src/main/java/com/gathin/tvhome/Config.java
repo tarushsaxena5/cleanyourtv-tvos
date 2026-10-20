@@ -319,4 +319,37 @@ final class Config {
         }
         return out;
     }
+
+    /**
+     * Atomically saves updated dock apps and hidden apps to config.json.
+     */
+    static void saveDockAndHidden(Context ctx, List<String> dockApps, List<String> hiddenApps) {
+        try {
+            File dir = dir(ctx);
+            if (dir == null) return;
+            if (!dir.exists()) dir.mkdirs();
+            File file = new File(dir, FILE_NAME);
+            JSONObject json = read(file);
+            if (json == null) json = new JSONObject();
+
+            JSONArray dockArr = new JSONArray();
+            if (dockApps != null) {
+                for (String d : dockApps) dockArr.put(d);
+            }
+            json.put("dock_apps", dockArr);
+
+            JSONArray hiddenArr = new JSONArray();
+            if (hiddenApps != null) {
+                for (String h : hiddenApps) hiddenArr.put(h);
+            }
+            json.put("hidden_apps", hiddenArr);
+
+            android.util.AtomicFile af = new android.util.AtomicFile(file);
+            java.io.FileOutputStream out = af.startWrite();
+            out.write(json.toString(2).getBytes(StandardCharsets.UTF_8));
+            af.finishWrite(out);
+        } catch (Exception e) {
+            Log.w(TAG, "Cannot save config.json: " + e);
+        }
+    }
 }

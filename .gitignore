@@ -47,6 +47,7 @@ Desktop.ini
 *.apk
 *.aab
 !docs/screenshots/*.png
+!docs/screenshots/*.gif
 !docs/*.png
 !themes/**/*.png
 !themes/**/*.jpg
