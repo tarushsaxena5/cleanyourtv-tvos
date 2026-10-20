@@ -1,0 +1,16 @@
+{
+  "dock_apps": [
+    "org.smarttube.stable",
+    "app.netmirror.newtv",
+    "in.startv.hotstar",
+    "com.amazon.amazonvideo.livingroom"
+  ],
+  "hidden_apps": [
+    "com.android.tv.settings",
+    "com.smartdevice.livetv",
+    "com.smartdevice.duplebluetooth",
+    "com.mediatek.wfd.sink",
+    "com.mediatek.androidbox"
+  ],
+  "columns": 4
+}

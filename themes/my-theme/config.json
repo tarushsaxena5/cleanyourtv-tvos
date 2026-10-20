@@ -1,0 +1,18 @@
+{
+  "dock_apps": [
+    "org.smarttube.stable",
+    "app.netmirror.newtv",
+    "in.startv.hotstar",
+    "com.amazon.amazonvideo.livingroom"
+  ],
+  "hidden_apps": [
+    "coolitachannel.coolita.channelfilmestvs",
+    "com.coolita.channel",
+    "com.android.tv.settings",
+    "com.smartdevice.livetv",
+    "com.smartdevice.duplebluetooth",
+    "com.pittvandewitt.wavelet",
+    "com.yablio.sendfilestotv"
+  ],
+  "columns": 4
+}

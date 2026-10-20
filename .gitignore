@@ -1,0 +1,52 @@
+# Local virtual environments & Python caches
+tools/venv/
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Local toolchains & portable SDKs
+build-tools/
+jdk*/
+android-sdk*/
+cmdline-tools/
+
+# Gradle & Android Studio build outputs
+.gradle/
+launcher/.gradle/
+build/
+launcher/build/
+launcher/app/build/
+local.properties
+launcher/local.properties
+launcher/hs_err_pid*.log
+launcher/replay_pid*.log
+
+# Keystores & ADB keys
+tools/adbkey/
+*.keystore
+*.jks
+*.key
+
+# Personal device backups & private device states (serial, android_id, dump files)
+backup/
+.system_generated/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+
+# Ignore loose images/apks in root or working dirs, but PRESERVE docs/screenshots and themes
+/*.png
+/*.jpg
+/*.jpeg
+*.apk
+*.aab
+!docs/screenshots/*.png
+!docs/*.png
+!themes/**/*.png
+!themes/**/*.jpg
