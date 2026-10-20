@@ -7,6 +7,9 @@ param(
 $ErrorActionPreference = 'Stop'
 
 if (-not $TvHost) {
+    $TvHost = Read-Host "Enter your Android TV / Google TV IP Address (e.g. 192.168.1.50)"
+}
+if (-not $TvHost) {
     throw 'Please specify your TV IP address: -TvHost <IP> or set $env:TV_HOST="192.168.x.x"'
 }
 $env:TV_HOST = $TvHost
