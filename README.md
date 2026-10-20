@@ -1,7 +1,7 @@
 # 📺 CleanYourTV Pro — Apple tvOS Edition for Android TV & Google TV
 
 <p align="center">
-  <img src="docs/screenshots/hero_home.png" alt="CleanYourTV Pro — Apple tvOS Edition Hero Screen" width="900">
+  <img src="docs/social-preview.png" alt="CleanYourTV Pro — Apple tvOS Edition Showcase Banner" width="920">
 </p>
 
 <p align="center">
@@ -9,20 +9,43 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/tarushsaxena5/cleanyourtv-tvos/releases/latest"><img src="https://img.shields.io/github/v/release/tarushsaxena5/cleanyourtv-tvos?style=for-the-badge&color=00C853&label=LATEST%20VERSION" alt="Latest Release"></a>
   <img src="https://img.shields.io/badge/Platform-Android%20TV%209%E2%80%9314-8A2BE2.svg?style=for-the-badge&logo=android" alt="Platform: Android TV 9-14">
   <img src="https://img.shields.io/badge/APK%20Size-~380%20KB-00C853.svg?style=for-the-badge" alt="APK Size: ~380 KB">
   <img src="https://img.shields.io/badge/RAM%20Footprint-%3C25%20MB-00B0FF.svg?style=for-the-badge" alt="RAM Footprint: <25 MB">
   <img src="https://img.shields.io/badge/Ads%20%26%20Telemetry-0%25-FF3D00.svg?style=for-the-badge" alt="Ads & Telemetry: 0%">
   <img src="https://img.shields.io/badge/Safety-100%25%20Reversible-FFD600.svg?style=for-the-badge" alt="Safety: 100% Reversible">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="MIT License"></a>
+  <a href="https://github.com/tarushsaxena5/cleanyourtv-tvos/stargazers"><img src="https://img.shields.io/github/stars/tarushsaxena5/cleanyourtv-tvos?style=for-the-badge&color=FFD700" alt="GitHub Stars"></a>
 </p>
+
+<p align="center">
+  <a href="#-visual-showcase"><b>Visual Showcase</b></a> •
+  <a href="#-why-choose-cleanyourtv-tvos-over-stock-google-tv--competitors"><b>Why This Repo</b></a> •
+  <a href="#-the-ultimate-android-tv-launcher-showdown"><b>Launcher Showdown</b></a> •
+  <a href="#-before-vs-after-performance-benchmarks"><b>Performance Benchmarks</b></a> •
+  <a href="#-step-by-step-installation-guide-4-methods"><b>Installation Guide</b></a> •
+  <a href="#-platform--hardware-compatibility-matrix"><b>Hardware Compatibility</b></a> •
+  <a href="#-faq"><b>FAQ</b></a>
+</p>
+
+---
+
+## ⚡ At a Glance (The TL;DR)
+
+- 🚀 **Reclaim 360+ MB of RAM:** Cuts launcher memory consumption by **62%**, freeing crucial CPU & RAM headroom for stutter-free **4K HDR, Dolby Vision, and 60fps streaming**.
+- 🚫 **100% Ad-Free & Zero Telemetry:** Strips out sponsored video carousels, recommendation trackers, and background OEM analytics. Zero network requests made by the launcher.
+- 🍎 **Authentic Apple tvOS Focus Engine:** `1.10x` card elevation pop, `14dp` Z-elevation lift, `220ms` ease-out transitions, `18dp` continuous squircles, and 2-stop specular glass sheen placed *behind* icons.
+- 🖼️ **Native 4K UHD Static Engine:** Expanded 25 MP memory budget renders pin-sharp `3840×2160` wallpapers with zero color shifting or ambient glow flickering.
+- 🛡️ **100% Safe & Fully Reversible:** Zero root required. Deactivates bloatware in user-space (`pm disable-user --user 0`) with automated pre-change snapshots for instant 1-click factory recovery.
+- 📺 **Universal Compatibility:** Tested and verified across **Sony Bravia, TCL, Xiaomi, Hisense, Motorola, Skyworth, Chromecast with Google TV, Nvidia Shield, and ONN 4K**.
 
 ---
 
 ## 🌟 Visual Showcase
 
 <p align="center">
-  <img src="docs/screenshots/hero_home.png" width="900" alt="Apple tvOS Hero Home Screen">
+  <img src="docs/screenshots/hero_home.png" width="920" alt="Apple tvOS Hero Home Screen">
   <br>
   <i><b>Apple tvOS Hero Home:</b> True borderless floating dock, native 4K UHD static wallpaper engine, real-time Wi-Fi pill with full SSID, hardware Inputs switcher, and circular icon-only Settings gear. Zero ads, zero video trailers.</i>
 </p>
@@ -30,16 +53,16 @@
 <br>
 
 <p align="center">
-  <img src="docs/screenshots/app_grid.png" width="900" alt="Dual-Category App Grid">
+  <img src="docs/screenshots/app_grid.png" width="920" alt="Dual-Category App Grid">
   <br>
   <i><b>Dual-Category App Grid:</b> Seamlessly unifies official Android TV Leanback apps and sideloaded Android applications in a clean 4-column layout, automatically filtering out hidden OEM background utilities.</i>
 </p>
 
 ---
 
-## ⚡ Why Choose CleanYourTV-tvOS Over Stock Google TV & Original CleanYourTV?
+## ⚡ Why Choose CleanYourTV-tvOS Over Stock Google TV & Competitors?
 
-This project builds upon the open-source foundation of [Gathin23/cleanyourtv](https://github.com/Gathin23/cleanyourtv), re-architecting the core rendering pipeline, input handling, and app discovery engine to eliminate visual glitches and deliver authentic Apple tvOS fidelity:
+This project builds upon the foundation of [Gathin23/cleanyourtv](https://github.com/Gathin23/cleanyourtv), re-architecting the core rendering pipeline, input handling, and app discovery engine to eliminate visual glitches and deliver authentic Apple tvOS fidelity:
 
 | Feature / Bug Fix | Stock Google TV (`LauncherX`) | Original `Gathin23/cleanyourtv` | **This Repo (`tarushsaxena5/cleanyourtv-tvos` Pro)** |
 | :--- | :--- | :--- | :--- |
@@ -51,6 +74,23 @@ This project builds upon the open-source foundation of [Gathin23/cleanyourtv](ht
 | **6. 4K Wallpaper Pipeline** | None (compressed vendor backdrops) | ❌ **Limited:** Low bitmap pixel cap (~4 MB) & manual image pre-resizing required | ✅ **Upgraded:** Expanded **25MP 4K UHD** memory budget + 1-click `push_wallpaper_from_downloads.ps1` automated 16:9 bicubic cropper |
 | **7. On-TV Remote Customization & Universal Inputs** | Rigid vendor layout locked by Google | ❌ **PC Required:** Must edit XML/JSON on a PC to reorder or hide apps; brand-specific input intents | ✅ **Upgraded:** **Long-Press `OK` Remote Menu** (Pin/Unpin Dock, Move Left/Right, Hide/Unhide on TV) + universal crash-proof `TvInputManager` HDMI switcher |
 | **RAM & APK Footprint** | ~400–550 MB RAM | ~390 KB APK / <25 MB RAM | **~385 KB APK / <25 MB RAM (Zero Ads, Zero Telemetry)** |
+
+---
+
+## 🥊 The Ultimate Android TV Launcher Showdown
+
+How does **CleanYourTV Pro** compare against the most popular custom launchers for Android TV?
+
+| Feature / Capability | Stock Google TV | FLauncher | Projectivy Launcher | **CleanYourTV Pro (tvOS Edition)** |
+| :--- | :---: | :---: | :---: | :---: |
+| **Binary Size (APK)** | System pre-installed | ~5 MB | ~15 MB+ | **~380 KB (Smallest in class)** |
+| **Idle RAM Consumption** | 350 MB – 500 MB+ | ~45 MB | ~80 MB – 120 MB | **< 25 MB (Ultra-lightweight)** |
+| **Authentic Apple tvOS Physics** | ❌ No | ❌ No (Flat tiles) | ❌ Partial (Custom animations) | ✅ **Yes (True tvOS Focus Engine)** |
+| **Floating Borderless Dock** | ❌ No | ❌ No | ❌ No | ✅ **Yes** |
+| **Native 4K UHD Wallpapers** | ❌ No | ⚠️ 1080p limited | ⚠️ Standard bitmap cap | ✅ **Yes (25 MP budget)** |
+| **Built-in Safe Debloat Suite** | ❌ No | ❌ No (Separate tool) | ❌ No (Manual setup) | ✅ **Yes (Automatic with rollback)** |
+| **Zero Cost / 100% Open Source** | ❌ Proprietary | ✅ Open Source (GPL) | ⚠️ Freemium (Paid features) | ✅ **100% Free & Open Source (MIT)** |
+| **Play Store Live Auto-Refresh** | ✅ Yes | ❌ Manual reload | ⚠️ Delayed scan | ✅ **Instantaneous BroadcastReceiver** |
 
 ---
 
@@ -91,6 +131,7 @@ cleanyourtv-tvos/
 │   ├── build-and-install.ps1 (.sh)  # Gradle build & deploy automation
 │   └── app/                         # Native Java Android TV launcher source code (<385 KB)
 └── docs/
+    ├── COMMUNITY_LAUNCH.md          # Complete viral launch playbook (Reddit, XDA, Hacker News)
     ├── REMOTE.md                    # Remote setup guide (Tailscale, VPN, remote debugging)
     ├── TROUBLESHOOTING.md           # Extensive hardware gotchas, port issues & fixes
     └── screenshots/                 # Sanitized high-resolution showcase captures
@@ -198,8 +239,11 @@ The fastest automated Windows method for non-developers:
 1. **Download APK:** Grab the latest `CleanYourTV-tvOS-v1.0.0.apk` from the **[Releases](https://github.com/tarushsaxena5/cleanyourtv-tvos/releases)** tab.
 2. **Transfer to TV:**
    - Put it on a USB flash drive and plug it into your TV, **OR**
-   - Use the free **Downloader by AFTVnews** app (or **Send Files to TV**) from the Google Play Store on your TV.
-3. **Install:** Open your TV's file manager, select the APK, and choose **Install**.
+   - Open the free **Downloader by AFTVnews** app on your TV and enter the direct download link:
+     ```
+     https://github.com/tarushsaxena5/cleanyourtv-tvos/releases/latest/download/CleanYourTV-tvOS-v1.0.0.apk
+     ```
+3. **Install:** Click the APK, select **Install**, and grant permissions if prompted.
 4. **Set as Default:** Press the **Home** button on your remote $\rightarrow$ select **CleanYourTV** $\rightarrow$ choose **Always**.
 
 ---
@@ -282,6 +326,9 @@ The script will automatically:
 
 ## 💡 Frequently Asked Questions (FAQ)
 
+### Q: Why is CleanYourTV faster than Projectivy or FLauncher?
+**A:** CleanYourTV is written in pure native Java with direct hardware-accelerated AndroidX views and zero heavy third-party framework overhead. Its compiled binary is only **~380 KB** (compared to 15 MB+ for Projectivy), and its background memory footprint is under **25 MB**, making it virtually undetectable to the system scheduler even on low-cost 1 GB RAM TVs.
+
 ### Q: Why isn't my external USB drive or hard disk showing up after connecting?
 **A:** This is standard Android TV behavior when `USB debugging` is active. Go to your TV's `Settings` $\rightarrow$ `Developer options` and toggle **USB debugging to OFF**. This immediately restores 5V USB-OTG power so all external drives mount properly.
 
@@ -290,6 +337,18 @@ The script will automatically:
 
 ### Q: Does Voice Search with the remote microphone still work?
 **A:** Yes. `com.google.android.katniss` (Google Assistant / Voice Search) and `com.google.android.gms` (Play Services) are preserved and untouched.
+
+### Q: How do I remove ads from Google TV permanently?
+**A:** The stock Google TV launcher (`com.google.android.apps.tv.launcherx`) fetches ads on every wake cycle. CleanYourTV freezes `launcherx` in Android user-space, cutting off the ad-rendering pipeline at the root while replacing it with our clean Apple tvOS Home screen.
+
+---
+
+## ⭐ Support This Open-Source Project
+
+If CleanYourTV Pro brought your TV back to life and gave you an authentic Apple tvOS experience:
+- **Star this repository** at the top right of this page! ⭐
+- Share it on **Reddit** (`r/AndroidTV`, `r/GoogleTV`, `r/firetvstick`).
+- Check out the **[Community Launch Playbook](docs/COMMUNITY_LAUNCH.md)** for launch templates and discussion channels.
 
 ---
 
