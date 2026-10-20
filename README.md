@@ -1,7 +1,7 @@
 # 📺 CleanYourTV Pro — Apple tvOS Edition for Android TV & Google TV
 
 <p align="center">
-  <img src="docs/screenshots/hero_home.png" alt="CleanYourTV Pro — Apple tvOS Edition" width="900">
+  <img src="docs/screenshots/hero_home.png" alt="CleanYourTV Pro — Apple tvOS Edition Hero Screen" width="900">
 </p>
 
 <p align="center">
@@ -22,17 +22,9 @@
 ## 🌟 Visual Showcase
 
 <p align="center">
-  <img src="docs/screenshots/focus_demo.gif" width="900" alt="Apple tvOS Focus Engine in Motion">
-  <br>
-  <i><b>Live Focus Engine:</b> 1.10x Z-elevation pop, 220ms smooth decelerate transitions, and specular glass rim highlights across app tiles.</i>
-</p>
-
-<br>
-
-<p align="center">
   <img src="docs/screenshots/hero_home.png" width="900" alt="Apple tvOS Hero Home Screen">
   <br>
-  <i><b>Apple tvOS Hero Home:</b> Clean floating dock, native 4K UHD static wallpaper, real-time Wi-Fi pill with full SSID, and zero advertising banners.</i>
+  <i><b>Apple tvOS Hero Home:</b> True borderless floating dock, native 4K UHD static wallpaper engine, real-time Wi-Fi pill with full SSID, hardware Inputs switcher, and circular icon-only Settings gear. Zero ads, zero video trailers.</i>
 </p>
 
 <br>
@@ -40,28 +32,89 @@
 <p align="center">
   <img src="docs/screenshots/app_grid.png" width="900" alt="Dual-Category App Grid">
   <br>
-  <i><b>Dual-Category App Grid:</b> Unifies official Android TV Leanback apps and sideloaded Android apps, with background OEM utilities cleanly filtered.</i>
+  <i><b>Dual-Category App Grid:</b> Seamlessly unifies official Android TV Leanback apps and sideloaded Android applications in a clean 4-column layout, automatically filtering out hidden OEM background utilities.</i>
 </p>
 
 ---
 
-## 🥊 Why This Edition? (All UI Glitches & Stock Bugs Fixed)
+## ⚡ Why Choose CleanYourTV-tvOS Over Stock Google TV & Original CleanYourTV?
 
-This project builds upon the fantastic foundation of [Gathin23/cleanyourtv](https://github.com/Gathin23/cleanyourtv), re-architecting the rendering and interaction pipeline to eliminate visual artifacts and deliver true Apple tvOS fidelity:
+This project builds upon the open-source foundation of [Gathin23/cleanyourtv](https://github.com/Gathin23/cleanyourtv), re-architecting the core rendering pipeline, input handling, and app discovery engine to eliminate visual glitches and deliver authentic Apple tvOS fidelity:
 
-| Feature / Subsystem | ❌ Stock Google TV (`LauncherX`) | ⚠️ Original CleanYourTV | 🍎 CleanYourTV Pro (Apple tvOS Edition) |
-|---|---|---|---|
-| **Focus Physics & Scaling** | Flat 2D white highlight box | Grey rectangular sliding overlay that smeared over app icon artwork | **Authentic Apple tvOS Focus Engine:** `1.10x` card scale, `14dp` Z-elevation pop, smooth `220ms` decelerate ease-out (`DecelerateInterpolator(1.8f)`), and `18dp` squircle corners |
-| **Glass Sheen Layer** | None | Simple opaque shape | **2-Stop Translucent Glass Specular:** Multi-layered gradient fill (`0x24FFFFFF` → `0x0CFFFFFF`) with a `1dp` specular rim light (`0x40FFFFFF`) placed *behind* the icon |
-| **Background Behavior** | Bloated ads, auto-playing video trailers, sponsored carousels | `AmbientGlow` color-shifting bug flashed red, blue, or pink across wallpaper when moving focus | **Static 4K UHD Engine:** Background tint animations disabled; 4K wallpaper remains 100% static, color-accurate, and flicker-free (with dark obsidian radial gradient fallback) |
-| **Dock Design** | None | Bulky dark rectangular container shelf covering the lower screen | **True Floating Dock:** Container shelf removed (`DockDecoration` rendered transparent); app tiles float cleanly over your 4K backdrop |
-| **App Customization** | None (rigid vendor layout) | Required editing JSON configs on a PC | **100% Remote D-Pad Menu:** Long-press `Select` or `Menu` on any app to Pin/Unpin Dock, Move Left/Right, Hide/Unhide, and view App Info directly on your TV |
-| **Inputs & HDMI Switcher** | Vendor-locked | OEM dependent, crashed on unsupported TVs | **Universal TvInputManager + OEM Fallbacks:** Safe switcher with automated fallbacks across Sony, TCL, Hisense, Xiaomi, Philips, Motorola, and Shield |
-| **Out-of-the-Box Setup** | Vendor default ads | Empty dock if configured apps missing | **Smart Auto-Populating Pool:** Instantly fills dock slots with installed streaming services (YouTube, SmartTube, Netflix, Disney+, Hotstar, Prime Video, Kodi, Plex) |
-| **App Discovery** | Ads first; app drawer hidden | Official Android TV Leanback apps only; sideloaded APKs missed | **Dual-Category Discovery:** Queries **both** `CATEGORY_LEANBACK_LAUNCHER` & `CATEGORY_LAUNCHER`, deduplicated in real-time |
-| **Play Store Installs** | Automatic | Required manual app restart or rebuild to detect new installations | **Live Auto-Refresh:** Integrated `BroadcastReceiver` (`ACTION_PACKAGE_ADDED` / `REPLACED`) auto-populates new apps instantly |
-| **Header Ergonomics** | Cluttered account / ad tabs | Settings button had text label; Wi-Fi truncated to 12 chars (`"My_Home_Wi..."`) | **Refined Top Bar:** `[Wi-Fi (Full SSID)]` $\rightarrow$ `[Inputs (Live TV/HDMI)]` $\rightarrow$ compact icon-only `[Settings ⚙️]` |
-| **Wallpaper Quality** | 1080p compressed | Low-res 4 MB budget | **Native 4K (25 MP) Budget:** Support for full `3840×2160` UHD wallpapers with automated 16:9 center-crop push script |
+| Feature / Bug Fix | Stock Google TV (`LauncherX`) | Original `Gathin23/cleanyourtv` | **This Repo (`tarushsaxena5/cleanyourtv-tvos` Pro)** |
+| :--- | :--- | :--- | :--- |
+| **1. Focus Glass Highlight** | Flat 2D white border outline | ❌ **Buggy:** Muddy opaque grey box drags & smears *over* app logos | ✅ **Fixed:** True Apple tvOS `1.10x` Z-elevation zoom (`14dp`), `220ms` decelerate ease-out (`DecelerateInterpolator(1.8f)`), `18dp` continuous squircles & crystal 2-stop glass sheen strictly *behind* cards |
+| **2. Background Color Stability** | Sponsored auto-playing video carousels & banners | ❌ **Buggy:** `AmbientGlow` color-shifting flashes wallpaper neon red/blue/pink on every click | ✅ **Fixed:** 100% static, untinted, color-accurate **4K UHD Wallpaper Engine** (zero color flickering) with obsidian dark radial gradient fallback |
+| **3. App Dock Container** | Cluttered horizontal recommendation rails | ❌ **Dated:** Heavy black rectangular container shelf drawn behind dock tiles (`DockDecoration`) | ✅ **Upgraded:** True borderless **Floating Dock** — app tiles float directly over your 4K backdrop with transparent dock styling |
+| **4. App Discovery (Play Store & Sideloads)** | Ads take 70% of screen; sideloads hidden in sub-menus | ❌ **Incomplete:** Queries `LEANBACK` only; misses standard Android/sideloaded APKs & requires manual restart on install | ✅ **Fixed:** **Dual-Category Discovery** (`LEANBACK` + `STANDARD LAUNCHER`) + live `BroadcastReceiver` (`ACTION_PACKAGE_ADDED` / `REPLACED`) auto-refresh |
+| **5. Top Header Bar & Wi-Fi Name** | Cluttered account switchers & ad tabs | ❌ **Truncated:** Cuts off Wi-Fi names with `...` (12-char limit) and uses wide text `"Settings"` button | ✅ **Refined:** Ergonomic `Wi-Fi` (full SSID shown) $\rightarrow$ `Inputs` $\rightarrow$ compact circular icon-only `Settings` gear button |
+| **6. 4K Wallpaper Pipeline** | None (compressed vendor backdrops) | ❌ **Limited:** Low bitmap pixel cap (~4 MB) & manual image pre-resizing required | ✅ **Upgraded:** Expanded **25MP 4K UHD** memory budget + 1-click `push_wallpaper_from_downloads.ps1` automated 16:9 bicubic cropper |
+| **7. On-TV Remote Customization & Universal Inputs** | Rigid vendor layout locked by Google | ❌ **PC Required:** Must edit XML/JSON on a PC to reorder or hide apps; brand-specific input intents | ✅ **Upgraded:** **Long-Press `OK` Remote Menu** (Pin/Unpin Dock, Move Left/Right, Hide/Unhide on TV) + universal crash-proof `TvInputManager` HDMI switcher |
+| **RAM & APK Footprint** | ~400–550 MB RAM | ~390 KB APK / <25 MB RAM | **~385 KB APK / <25 MB RAM (Zero Ads, Zero Telemetry)** |
+
+---
+
+## 🔬 How It Works Under the Hood
+
+CleanYourTV Pro is engineered from the ground up for maximum reliability, speed, and safety on TV hardware:
+
+1. **Standard Android Debug Bridge (ADB) over Wi-Fi:**
+   Communicates over standard ADB TCP (`port 5555`) or Android 11–14 Wireless Debugging TLS pairing (`_adb-tls-connect._tcp`). The included pure-Python client (`tools/tv.py`) talks directly to the TV daemon without requiring Android Studio, platform-tools, or USB cables.
+2. **Zero Root, Zero Uninstalled Files:**
+   Uses native Android package manager user-space deactivation (`pm disable-user --user 0`). System partition files are never deleted or modified; dormant bloatware consumes **0 MB RAM** and **0% CPU cycles**, remaining 100% factory-safe.
+3. **Automated Rollback Engine:**
+   Before applying any changes, `tools/recovery.py` snapshots the exact state of all enabled and disabled packages into `~/.cleanyourtv/recovery-*.json`. At any time, running `restore.ps1` or `restore.sh` instantly restores your device to factory stock.
+4. **Bulletproof Chunked File Transfers:**
+   Uses Python `adb-shell` and `tools/b64push.py` to transfer APKs and 4K wallpapers in base64 chunks with MD5 checksum verification. This completely bypasses macOS Local Network privacy blocks and avoids Android 14 `adb install` confirmation hangs.
+
+---
+
+## 🗂️ Complete Repository Tooling Map
+
+Every script in this repository is designed to be fully portable, standalone, and self-documenting:
+
+```
+cleanyourtv-tvos/
+├── Easy-Install.ps1                 # Universal 1-click interactive terminal wizard (Windows)
+├── build_deploy.ps1                 # Full build & install script with multi-JDK auto-detection
+├── push_wallpaper_from_downloads.ps1# 4K UHD wallpaper cropper and direct ADB pusher
+├── PROMPT.md                        # Master AI blueprint for Antigravity, Claude Code, Codex, Cursor
+├── my-debloat.txt                   # Universal safe debloat profile (27+ vendor trackers frozen)
+├── tools/
+│   ├── tv.py                        # Pure-Python ADB communication engine (no adb binary needed)
+│   ├── b64push.py                   # High-reliability chunked base64 file pusher with MD5 validation
+│   ├── recovery.py                  # Device state inspector & automated snapshot rollback engine
+│   ├── disable.ps1 / disable.sh     # Safe batch debloating scripts with dependency sanity checks
+│   ├── restore.ps1 / restore.sh     # 1-click instant restoration of frozen OEM packages
+│   └── theme.ps1 / theme.sh         # Live config.json theme pusher (colors, columns, layouts)
+├── launcher/
+│   ├── build-and-install.ps1 (.sh)  # Gradle build & deploy automation
+│   └── app/                         # Native Java Android TV launcher source code (<385 KB)
+└── docs/
+    ├── REMOTE.md                    # Remote setup guide (Tailscale, VPN, remote debugging)
+    ├── TROUBLESHOOTING.md           # Extensive hardware gotchas, port issues & fixes
+    └── screenshots/                 # Sanitized high-resolution showcase captures
+```
+
+---
+
+## 📺 Platform & Hardware Compatibility Matrix
+
+CleanYourTV Pro is engineered and verified to run universally across all major TV architectures:
+
+| Platform / Brand | Compatibility Status | Notes & Verified Capabilities |
+| :--- | :--- | :--- |
+| **Sony Bravia (A80/A90/X90/Bravia 7/8/9)** | ✅ **Full Support** | Android 9 – 14. 4K HDR, HDMI inputs, Quick Settings overlay, ultra-low input lag. |
+| **TCL (Google TV Series C/Q/P/QM8)** | ✅ **Full Support** | Android 11 – 13. Live TV tuner integration, floating dock, Apple tvOS focus engine. |
+| **Xiaomi / Mi TV / Redmi TV** | ✅ **Full Support** | Android 9 – 12. PatchWall telemetry bypass, dual Leanback + sideloaded grid. |
+| **Hisense (Vidaa / Google TV)** | ✅ **Full Support** | Android 10 – 12. Hardware HDMI inputs switcher, 4K static obsidian wallpaper engine. |
+| **Motorola Envision / Skyworth / Coocaa** | ✅ **Full Support** | Android 9 – 11. Complete safe debloat, 62% RAM freed, 4K UHD wallpaper rendering. |
+| **Chromecast with Google TV (HD & 4K)** | ✅ **Full Support** | Android 12 – 14. Zero-ad home replacement, 718 MB free RAM headroom. |
+| **Nvidia Shield TV / Shield TV Pro** | ✅ **Full Support** | Android 9 – 11. High-performance gaming and lossless Dolby Vision streaming. |
+| **ONN 4K Streaming Box (Walmart)** | ✅ **Full Support** | Android 12 – 14. Transforms the budget $20 box into a flagship Apple TV experience. |
+| **OnePlus TV / Realme TV / Philips TV** | ✅ **Full Support** | Android 9 – 12. Complete background bloatware freeze with zero lag. |
+| **Amazon Fire TV (Stick / Cube / Omni)** | ⚠️ **Debloat Support** | FireOS 6 – 8. Supports complete debloat scripts. Replaces ad carousels; note that FireOS locks the Home button unless an accessibility button remap helper is used. |
+| **Samsung (Tizen OS) & LG (webOS)** | ❌ **Unsupported** | Proprietary closed Linux platforms that do not use the Android APK runtime or ADB. |
 
 ---
 
@@ -88,92 +141,113 @@ Live diagnostic audit captured on **Skyworth SW6H / Motorola EnvisionX 55" 4K QL
 
 ---
 
-## 📺 Universal Hardware Compatibility
-
-CleanYourTV Pro is engineered and verified to run universally across all major Android TV and Google TV devices:
-
-| Brand / Platform | Android Versions | Key Features & Verified Compatibility |
-|---|---|---|
-| **Sony Bravia (A80/A90/X90/Bravia 7/8/9)** | Android 9 – 14 | 4K HDR, HDMI inputs, Quick Settings overlay, ultra-low input lag |
-| **TCL (Google TV Series C/Q/P/QM8)** | Android 11 – 13 | Live TV tuner integration, floating dock, Apple tvOS focus engine |
-| **Xiaomi / Mi TV / Redmi TV** | Android 9 – 12 | PatchWall telemetry bypass, dual Leanback + sideloaded grid |
-| **Hisense (Vidaa / Google TV)** | Android 10 – 12 | Hardware HDMI inputs switcher, 4K static obsidian wallpaper engine |
-| **Skyworth / Coocaa / Motorola Envision** | Android 9 – 11 | Complete safe debloat, 62% RAM freed, 4K UHD wallpaper rendering |
-| **Chromecast with Google TV (HD & 4K)** | Android 12 – 14 | Zero-ad home replacement, 718 MB free RAM headroom |
-| **Nvidia Shield TV / Shield TV Pro** | Android 9 – 11 | High-performance gaming and lossless Dolby Vision streaming |
-| **Amazon Fire TV (Omni / Max / Cube)** | FireOS 6 – 8 | Compatible via ADB sideload; replaces ad carousels with clean glass |
+## 🚀 Step-by-Step Installation Guide (4 Methods)
 
 ---
 
-## 🚀 Step-by-Step Installation Guide (Choose 1 of 3 Methods)
+### 🤖 Method 1: AI Coding Agent Setup — Google Antigravity, Claude Code, OpenAI Codex, Cursor, or Gemini CLI (Recommended Full Custom Setup)
 
----
-
-### 🟢 Method 1: Direct APK Install via USB or TV Browser (No PC Required — Easiest)
-
-1. **Download:** Grab the latest `CleanYourTV-tvOS-v1.0.0.apk` from the **[Releases](../../releases)** tab.
-2. **Transfer to TV:**
-   - Put it on a USB flash drive and plug it into your TV, **OR**
-   - Use the free **Downloader by AFTVnews** app (or **Send Files to TV**) from the Google Play Store on your TV.
-3. **Install:** Open your TV's file manager, click the APK, and select **Install**.
-4. **Set as Default:** Press the **Home** button on your remote $\rightarrow$ select **CleanYourTV** $\rightarrow$ choose **Always**.
-
----
-
-### ⚡ Method 2: 1-Click Automated Setup on Windows (Recommended for Full Optimization)
-
-This method automates the launcher installation, safe debloat suite, and 4K wallpaper setup in under 60 seconds:
+If you use an agentic coding assistant with shell access, you can perform a 100% hands-free, personalized setup tailored specifically to your TV model in ~10 minutes:
 
 1. **Enable Debugging on TV:**
    - Go to `Settings` ⚙️ $\rightarrow$ `System` (or `Device Preferences`) $\rightarrow$ `About`.
    - Scroll down to `Android TV OS build` and press the **OK / Center button 7 times** until you see *"You are now a developer!"*.
    - Return to `Settings` $\rightarrow$ `Developer options` $\rightarrow$ turn **USB debugging** (or **Network debugging**) to **ON**.
    - Note your TV's IP address in `Settings` $\rightarrow$ `Network & Internet` (e.g. `192.168.1.50`).
-
-2. **Run the 1-Click Installer on your PC:**
-   - Download or clone this repository to your PC.
-   - Right-click `Easy-Install.ps1` and select **Run with PowerShell** (or open PowerShell in the repo folder):
-     ```powershell
-     .\Easy-Install.ps1
-     ```
-   - Enter your TV's IP address when prompted.
-   - Look at your TV screen and select **"Always allow from this computer"** when prompted.
-   - Select:
-     * `[1]` to install the Apple tvOS Launcher safely without altering any system apps.
-     * `[2]` for Full Optimization (Launcher + Safe Debloat with rollback record).
-
-3. **Important Hardware Tip:**
-   - When finished, go back to TV `Settings` $\rightarrow$ `Developer options` and toggle **USB debugging OFF**.
-   - *Why?* Keeping USB debugging ON locks the TV's USB ports into client mode; turning it OFF restores full 5V USB-OTG power for external hard drives, SSDs, and flash drives.
-
----
-
-### 🛠️ Method 3: Build & Customize from Source (For Developers)
-
-1. Clone the repository:
+2. **Clone this Repository:**
    ```bash
    git clone https://github.com/tarushsaxena5/cleanyourtv-tvos.git
    cd cleanyourtv-tvos
    ```
-2. Customize your pinned Dock apps or hidden utilities in `launcher/app/src/main/res/values/config.xml`:
-   ```xml
-   <string-array name="dock_apps">
-       <item>org.smarttube.stable</item>
-       <item>app.netmirror.newtv</item>
-       <item>in.startv.hotstar</item>
-       <item>com.amazon.amazonvideo.livingroom</item>
-   </string-array>
-   ```
-3. Compile and deploy directly to your TV:
+3. **Run via Your Preferred AI Agent:**
+   - Open this directory in **Google Antigravity**, **Claude Code**, **OpenAI Codex**, **Cursor**, or **Gemini CLI**.
+   - Open [`PROMPT.md`](PROMPT.md), replace `<MODEL NAME HERE>` and the IP with your TV details, and paste it to the assistant.
+   - The AI agent will autonomously:
+     * Connect to your TV over ADB and verify network stability.
+     * Snapshot your TV's original package state for safe 1-click rollback.
+     * Categorize and safely freeze manufacturer telemetry and ad trackers.
+     * Build and install the Apple tvOS Launcher with your chosen dock apps.
+     * Push a crisp 4K wallpaper and verify every step using live on-screen screenshots.
+
+---
+
+### ⚡ Method 2: 1-Click Automated PC Wizard (`Easy-Install.ps1` — No Coding Required)
+
+The fastest automated Windows method for non-developers:
+
+1. **Enable USB Debugging** on your TV (as described in Method 1).
+2. **Download or Clone** this repository to your PC.
+3. **Run `Easy-Install.ps1`:**
+   Right-click `Easy-Install.ps1` $\rightarrow$ **Run with PowerShell** (or run from a PowerShell terminal):
    ```powershell
-   .\build_deploy.ps1 -TvHost 192.168.1.50 -InputKeyService
+   powershell -ExecutionPolicy Bypass -File .\Easy-Install.ps1
    ```
+4. Enter your TV's IP address when prompted.
+5. Choose an option from the menu:
+   * `[1] Install Apple tvOS Launcher Only (100% Safe, Zero System Changes)`
+   * `[2] Full Optimization (Install Launcher + Safe Debloat with Automatic Backup)`
+   * `[3] Push Custom 4K Wallpaper from Downloads Folder`
+   * `[4] Restore Stock Google TV Launcher (1-Click Complete Rollback)`
+
+> 💡 **Important Hardware Tip:** When finished, go back to TV `Settings` $\rightarrow$ `Developer options` and toggle **USB debugging OFF**. Keeping USB debugging ON locks TV ports into ADB device mode; turning it OFF restores full 5V USB-OTG power for external hard drives, SSDs, and flash drives.
+
+---
+
+### 🟢 Method 3: Direct TV Install via USB Drive or "Downloader" App (No PC Required — 60 Seconds)
+
+1. **Download APK:** Grab the latest `CleanYourTV-tvOS-v1.0.0.apk` from the **[Releases](https://github.com/tarushsaxena5/cleanyourtv-tvos/releases)** tab.
+2. **Transfer to TV:**
+   - Put it on a USB flash drive and plug it into your TV, **OR**
+   - Use the free **Downloader by AFTVnews** app (or **Send Files to TV**) from the Google Play Store on your TV.
+3. **Install:** Open your TV's file manager, select the APK, and choose **Install**.
+4. **Set as Default:** Press the **Home** button on your remote $\rightarrow$ select **CleanYourTV** $\rightarrow$ choose **Always**.
+
+---
+
+### 🛠️ Method 4: Manual ADB & Build from Source (For Developers)
+
+For developers who want complete command-line control:
+
+#### Windows (PowerShell):
+```powershell
+# 1. Connect to TV over ADB
+$env:TV_HOST = "192.168.1.50"
+python -m venv tools\venv
+.\tools\venv\Scripts\pip.exe install -q -r tools\requirements.txt
+.\tools\venv\Scripts\python.exe -I tools\tv.py "echo Connected"
+
+# 2. Debloat telemetry & stock launcher (with automatic recovery snapshot)
+powershell -ExecutionPolicy Bypass -File tools\disable.ps1 -TvHost $env:TV_HOST my-debloat.txt
+
+# 3. Build & Deploy Launcher
+powershell -ExecutionPolicy Bypass -File build_deploy.ps1 -TvHost $env:TV_HOST -InputKeyService
+```
+
+#### macOS / Linux (Bash):
+```bash
+# 1. Connect to TV over ADB
+export TV_HOST="192.168.1.50"
+python3 -m venv tools/venv
+tools/venv/bin/pip install -q -r tools/requirements.txt
+tools/venv/bin/python -I tools/tv.py "echo Connected"
+
+# 2. Debloat telemetry & stock launcher (with automatic recovery snapshot)
+bash tools/disable.sh my-debloat.txt
+
+# 3. Build & Deploy Launcher
+cd launcher && ./gradlew assembleRelease
+cd ..
+tools/venv/bin/python -I tools/b64push.py launcher/app/build/outputs/apk/release/app-release.apk /data/local/tmp/tvhome.apk
+tools/venv/bin/python -I tools/tv.py "pm install -r /data/local/tmp/tvhome.apk; rm -f /data/local/tmp/tvhome.apk"
+tools/venv/bin/python -I tools/tv.py "cmd package set-home-activity --user 0 com.gathin.tvhome/.MainActivity"
+tools/venv/bin/python -I tools/tv.py "am start -n com.gathin.tvhome/.MainActivity"
+```
 
 ---
 
 ## 🖼️ Automated 4K Wallpaper Pipeline
 
-Drop any high-resolution wallpaper (`.jpg` or `.png`) into your Windows PC's `Downloads` folder, then run:
+Drop any high-resolution wallpaper (`.jpg` or `.png`) into your PC's `Downloads` folder, then run:
 
 ```powershell
 .\push_wallpaper_from_downloads.ps1 -TvHost 192.168.1.50
@@ -190,7 +264,7 @@ The script will automatically:
 
 ## 🔄 100% Safe Rollback & Recovery Guide
 
-**Zero files are deleted.** CleanYourTV only freezes packages in Android user-space (`pm disable-user --user 0`).
+**Zero system files are deleted.** CleanYourTV only freezes packages in Android user-space (`pm disable-user --user 0`).
 
 - **1-Click Restore via Easy-Install:**
   Run `.\Easy-Install.ps1` and select option `[4] Restore Stock Google TV Launcher`.

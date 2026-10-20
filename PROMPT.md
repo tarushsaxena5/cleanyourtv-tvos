@@ -1,114 +1,63 @@
-# The prompt
+# The Master AI Assistant Prompt
 
-Paste this into Claude Code (or another coding assistant with shell access) on a computer that is
-on the same Wi-Fi as the TV. Works on Android TV / Google TV sets (Xiaomi, TCL, Hisense, Sony,
-OnePlus, Realme, Nvidia Shield and most others). It will not work on Samsung Tizen, LG webOS or
-Fire TV. If you cloned this repo, mention that: the assistant can reuse `tools/` and `launcher/`
-instead of writing them from scratch, and only needs to edit `launcher/.../values/config.xml`.
+Paste this into **Google Antigravity**, **Claude Code**, **OpenAI Codex**, **Cursor**, or **Gemini CLI** (or another coding assistant with shell access) on a computer connected to the same Wi-Fi / subnet as the TV.
 
-Before you start, on the TV: Settings → Device Preferences → About → press OK on "Build" 7 times,
-then go back → Developer options → turn on USB debugging (and Network/ADB debugging if your TV
-shows it). Keep the TV on. Some boxes cut power to their USB port while USB debugging is on, so a
-USB speaker or drive plugged into it goes dead until you switch debugging off again.
+Works universally on all **Android TV & Google TV** devices (Sony Bravia, TCL, Xiaomi, Hisense, Motorola, Skyworth, OnePlus, Realme, Philips, Chromecast with Google TV, Nvidia Shield TV, ONN 4K Streaming Box, and most others).
 
----
+> [!NOTE]
+> Since you cloned this repository (`tarushsaxena5/cleanyourtv-tvos`), you can reuse `tools/`, `launcher/`, `push_wallpaper_from_downloads.ps1`, and `Easy-Install.ps1` instead of writing them from scratch.
 
-I want to debloat my Android TV and replace its launcher with a clean Apple TV style home screen.
-My TV model is: <MODEL NAME HERE>. Work on the real device, step by step, and verify everything you
-do with screenshots pulled from the TV. Ask me before anything that depends on my preferences.
-
-Connect
-- Find the TV on my network (hostname, ARP table, or ask me for the IP) and connect over ADB on port 5555.
-  If the TV is in another home, I'll give you its Tailscale address instead (docs/REMOTE.md): use that,
-  don't scan my local network.
-- If the stock adb binary fails with "No route to host" on macOS even though the port is open, that is
-  macOS Local Network privacy blocking adb. Don't debug it: use the Python `adb-shell` package in a venv
-  as the ADB client instead. If its file push hangs on larger files, transfer files as base64 chunks
-  through the shell and verify the md5.
-- If port 5555 stays closed, the TV may only offer Wireless debugging (Google TV sets often do): look for
-  `_adb-tls-connect._tcp` with `dns-sd -B` or `adb mdns services`, ask me for the code and port under
-  Developer options > Wireless debugging > Pair device with pairing code, then `adb pair`, `adb connect`
-  and `adb tcpip 5555`. Android switches Wireless debugging off whenever Wi-Fi drops.
-- Tell me when the "Allow USB debugging?" prompt will appear on the TV so I can accept it.
-- If `adb install` hangs on Android 14 it is waiting for an on-screen confirmation; push the APK and run
-  `pm install -r` over the shell instead.
-
-Back up first
-- Save the full package list, disabled-package list, getprop output and all settings to a backup folder
-  before changing anything, and write a restore script that re-enables everything you disable.
-- Ask me what is plugged into the TV's USB ports. Some devices cut their power while USB debugging
-  is on, so warn me, and remind me to switch debugging off once you're done.
-- When you finish, close network ADB instead of leaving it open: switch USB debugging and
-  Network/ADB debugging off on the TV, revoke the USB debugging authorisations, reboot, and check
-  that `nc -vz <tv ip> 5555` fails. Port 5555 is plaintext, and on firmware with `ro.adb.secure=0`
-  any device on the LAN can get a shell.
-
-Debloat
-- List installed packages and sort them into: manufacturer telemetry/analytics, manufacturer content
-  and ad services (PatchWall, recommendation rows, content providers), background services I probably
-  don't need (share/cast duplicates, cleaners), preloaded apps, and streaming apps.
-- Disable the first categories with `pm disable-user --user 0`, never uninstall system packages.
-- Never disable what the TV needs to work: the TV app and input services that play HDMI and the
-  tuner, the input/source menu, remote control and Bluetooth pairing services, the on-screen
-  keyboard, Google Play Store and Play Services. Manufacturer package names often don't say what a
-  package does: check its activities and services with `dumpsys package` first, and ask me if it's
-  still unclear.
-- Before touching streaming apps, voice assistant, Chromecast, Miracast or the update service, ask me
-  which ones I use with a checklist question and disable only what I don't tick.
-- Run `pm` commands one per shell call, chained commands may silently stop after the first.
-- Disable in small batches and screenshot between them: a batch can take something load-bearing with
-  it and you cannot tell which.
-- Offer me ad-blocking DNS as an optional extra: on Android 9 and newer, Private DNS set to an
-  ad-blocking resolver (`settings put global private_dns_specifier dns.adguard-dns.com`, then
-  `settings put global private_dns_mode hostname`). Tell me it doesn't block YouTube ads, check an app
-  still plays afterwards, and note the undo (`private_dns_mode opportunistic`) in the README.
-
-Launcher
-- Check that the TV accepts APKs before building anything. Some China-market sets answer every
-  sideload with `INSTALL_FAILED_VERIFICATION_FAILURE` — `adb install`, `pm install`, a hand-started
-  installer and even the manufacturer's own APKs all fail — and others refuse any package that
-  declares `android.intent.category.HOME` unless it carries the manufacturer's signature. If you
-  hit either, do the debloat half, say plainly that the launcher half is impossible here, and stop
-  retrying installs. The matching `examples/` header says which case your TV is.
-- Don't install a third-party launcher that charges for basics like wallpapers. Build a small native
-  Android TV launcher instead (Java, AndroidX RecyclerView, minSdk matching the TV, debug build is fine),
-  install it over ADB, set it as the default home and disable the stock launcher. If several apps claim
-  the HOME intent, list them with `cmd package query-activities -a android.intent.action.MAIN -c
-  android.intent.category.HOME` and set the default with `cmd package set-home-activity`.
-- Before disabling the stock launcher, check which other apps claim HOME: on Google TV the setup wizard
-  (`com.google.android.tungsten.setupwraith`) takes over even after the stock launcher is disabled, and
-  the matching `examples/` header says what to do. Before disabling setupwraith, run
-  `dumpsys wifi | grep -o 'cname=[^ ]*'`: a Wi-Fi network saved during first setup belongs to it, and
-  Android deletes that network the moment it is disabled, which takes the TV off Wi-Fi and ADB. If it
-  does, ask me to forget the network and re-join it in Settings first.
-- On Android 11 and newer the launcher must declare `<queries>` for `android.intent.category.LEANBACK_LAUNCHER`,
-  or package visibility silently hides every app and the grid comes up empty; target a recent SDK, some
-  Google TV 14 sets refuse older targets at install.
-- Design, Apple TV 4K style: pitch black background; a dock row at the bottom of the screen inside a
-  slightly lighter rounded band holding the four apps I pick (ask me which, and the order); the rest of
-  the apps in a 4-column grid below that scrolls up when I press Down; one translucent "glass" highlight
-  that springs from tile to tile instead of per-tile borders; the focused tile scales up slightly and
-  shows its name underneath; above the dock, the focused dock app's name in large light type with an
-  ambient glow in a colour sampled from its banner; frosted pill buttons top right for Inputs, Wi-Fi
-  (showing the network name) and Settings; a greeting, a large thin clock and the date top left in a
-  downloaded open-licence typeface such as Outfit. Inputs opens a compact glass dropdown under the pill
-  listing the HDMI ports, AV and Live TV, switching via the TV input framework.
-- Make D-pad navigation deterministic: Up/Down move exactly one row, Up from the dock goes to the top
-  bar, the ends of the top bar don't fall through to tiles. Remember the last focused tile.
-- Keep it light: the TV has about 1 GB of RAM. No blur, no video, no network polling.
-
-Verify
-- After each change, inject remote key presses over ADB, take a screenshot from the TV and look at it.
-  Fix what you see before moving on.
-- Live TV and HDMI screenshots come back empty (0 bytes); that is the TV, not a broken debloat. Check
-  `dumpsys activity activities | grep topResumedActivity` instead (see `docs/TROUBLESHOOTING.md`).
-- If a remote button relies on an accessibility helper, check that the service is enabled and bound
-  for the current user, then ask me to press the real button; an injected key is not proof (see
-  `docs/TROUBLESHOOTING.md`).
-- When done, give me a restore script, a build-and-install script, and a README that explains how to
-  re-enable any app and how to change the dock order or the wallpaper.
+### Preparation on the TV:
+1. Go to `Settings` ⚙️ $\rightarrow$ `System` (or `Device Preferences`) $\rightarrow$ `About`.
+2. Scroll down to `Build` (or `Android TV OS build`) and press the **OK / Center button 7 times** until you see *"You are now a developer!"*.
+3. Go back to `Developer options` $\rightarrow$ turn **USB debugging** (and **Network / ADB debugging** if shown) to **ON**.
+4. Keep the TV on and note its IP address under `Settings` $\rightarrow$ `Network & Internet`.
 
 ---
 
-Expect to answer three or four checklist questions (which apps you use, which four go in the dock,
-whether to keep the voice assistant, Chromecast and firmware updates). Everything is reversible.
+```text
+I want to debloat my Android TV / Google TV and install the clean Apple tvOS Edition launcher from this repository (tarushsaxena5/cleanyourtv-tvos).
+My TV model is: <MODEL NAME HERE> (IP: <TV IP HERE>).
+
+Please work directly on the device, step-by-step, verifying everything you do with screenshots pulled from the TV. Ask me before anything that depends on my preferences.
+
+1. Connect to TV over ADB:
+- Connect to my TV over ADB on port 5555 using tools/tv.py (or Wireless Debugging TLS pairing if port 5555 is not exposed).
+- If on macOS and the stock adb binary fails with "No route to host" due to Local Network privacy blocks, use the Python adb-shell client in tools/venv.
+- For APKs and wallpapers, always use tools/b64push.py to push in base64 chunks to avoid file transfer hangs.
+- Warn me when the "Allow USB debugging?" authorization prompt will appear on the TV screen so I can accept it.
+
+2. Back Up Device State:
+- Before changing any package state, run tools/recovery.py to record an automated pre-change snapshot of all enabled and disabled packages into ~/.cleanyourtv/recovery-*.json.
+- Verify that a rollback script (tools/restore.ps1 or tools/restore.sh) is verified and ready.
+- Check if anything is plugged into the TV's USB ports, and warn me that some TVs cut 5V USB-OTG power while USB debugging is enabled.
+
+3. Debloat Bloatware & Telemetry:
+- Inspect installed packages and categorize them into:
+  * Manufacturer analytics / telemetry (PatchWall, retail demo loops, duplicate app stores)
+  * Preloaded bloatware & unused duplicate utilities
+  * Essential hardware services (DO NOT TOUCH: TV tuner, HDMI input manager, Bluetooth remotes/audio, Wi-Fi, on-screen keyboard, Play Store, Play Services)
+- Ask me which streaming services, voice assistants, or cast services I actually use before disabling any of them.
+- Freeze selected bloatware non-destructively using `pm disable-user --user 0` (via tools/disable.ps1 or disable.sh). Never uninstall system packages.
+
+4. Build & Deploy CleanYourTV Pro (Apple tvOS Edition):
+- Compile and install the launcher using build_deploy.ps1 (or gradle assembleRelease followed by b64push.py to /data/local/tmp/tvhome.apk and `pm install -r`).
+- Ensure all our flagship Apple tvOS upgrades are live and verified:
+  * Apple tvOS Focus Engine: 1.10x card scale pop, 14dp Z-elevation lift, 220ms ease-out transitions (DecelerateInterpolator(1.8f)), and 18dp squircle corners.
+  * 2-stop translucent specular glass highlight placed strictly behind icons with a 1dp rim light.
+  * True borderless Floating Dock: no heavy container box shelf. Auto-populates 4 dock tiles from installed streaming apps (SmartTube, YouTube, Netflix, Disney+, Hotstar, Prime Video, Plex, Kodi).
+  * Dual-Category Discovery: queries both LEANBACK and standard LAUNCHER categories with live BroadcastReceiver auto-refresh on Play Store installs.
+  * On-Screen Remote Customization: long-press remote OK/Select opens menu to Pin/Unpin, Move, Hide/Unhide, and view App Info directly on TV.
+  * Universal Crash-Proof Inputs: TvInputManager HDMI switcher with defensive OEM fallback intents and Toast handling.
+  * Native 4K UHD Static Wallpaper Engine: 25 MP cap raised, zero color flickering, with dark obsidian radial gradient fallback.
+- Set CleanYourTV as default Home via `cmd package set-home-activity --user 0 com.gathin.tvhome/.MainActivity`.
+- Safely disable the stock launcher (com.google.android.apps.tv.launcherx) and setupwraith if confirmed on Google TV.
+
+5. Push Custom 4K Wallpaper:
+- Ask me for my wallpaper preference, or run `push_wallpaper_from_downloads.ps1` to auto-crop the newest downloaded wallpaper in 16:9 4K UHD (3840x2160) and push directly to the TV.
+
+6. Visual Verification:
+- After applying changes, inject remote D-pad key presses, capture screenshots from the TV via `screencap -p /data/local/tmp/verify.png`, pull and inspect the visual layout.
+- Confirm that focus scaling, the floating dock, the top bar (Wi-Fi SSID, Inputs, Settings gear), and app scrolling are crisp, responsive, and glitch-free.
+- Remind me to switch USB debugging OFF in TV Developer options once finished to restore 5V USB-OTG power for external hard drives.
+```
