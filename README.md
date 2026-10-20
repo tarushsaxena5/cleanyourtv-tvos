@@ -152,7 +152,7 @@ This method automates the launcher installation, safe debloat suite, and 4K wall
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/Gathin23/cleanyourtv-tvos.git
+   git clone https://github.com/tarushsaxena5/cleanyourtv-tvos.git
    cd cleanyourtv-tvos
    ```
 2. Customize your pinned Dock apps or hidden utilities in `launcher/app/src/main/res/values/config.xml`:
