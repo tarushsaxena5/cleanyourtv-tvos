@@ -183,6 +183,27 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private boolean libraryFocusPending;
     private RecyclerView.OnScrollListener pendingFocusScroll;
 
+    private static android.graphics.Bitmap sCachedWallpaperBitmap;
+    private static String sCachedWallpaperPath;
+    private static long sCachedWallpaperModified;
+    private static final java.util.concurrent.ExecutorService sWallpaperExecutor = java.util.concurrent.Executors.newSingleThreadExecutor();
+    private android.widget.ImageView wallpaperView;
+    private long lastAppLoadTime = 0;
+
+    private final BroadcastReceiver userUnlockReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (Intent.ACTION_USER_UNLOCKED.equals(intent.getAction())) {
+                sWallpaperExecutor.execute(() -> Config.mirrorToDeviceProtectedStorage(context));
+                Config cfg = Config.load(context);
+                if (cfg.wallpaper != null) {
+                    showWallpaper(cfg.wallpaper);
+                }
+                reloadApps(false);
+            }
+        }
+    };
+
     private final Handler handler = new Handler(Looper.getMainLooper());
     /** Refreshes the network pill when the connection changes: at boot Wi-Fi often connects after Home is shown. */
     private final ConnectivityManager.NetworkCallback networkCallback = new ConnectivityManager.NetworkCallback() {
@@ -247,6 +268,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         density = getResources().getDisplayMetrics().density;
+        try {
+            registerReceiver(userUnlockReceiver, new IntentFilter(Intent.ACTION_USER_UNLOCKED));
+        } catch (Exception ignored) {}
+        android.os.UserManager um = (android.os.UserManager) getSystemService(Context.USER_SERVICE);
+        if (um != null && um.isUserUnlocked()) {
+            sWallpaperExecutor.execute(() -> Config.mirrorToDeviceProtectedStorage(this));
+        }
         // config.xml, overlaid by config.json from a pushed theme (see Config and tools/theme.sh).
         Config cfg = Config.load(this);
         settingsKeycodes = cfg.settingsKeycodes;
@@ -525,39 +553,61 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     /**
-     * A theme's full-screen picture behind everything. Decoded once at the size CENTER_CROP shows, so it
-     * costs a screen-sized bitmap (about 4 MB at 1080p), which is the price of a wallpaper on a 1 GB TV.
-     * A picture over 4K is refused rather than decoded (#166); the plain colour stays.
+     * A theme's full-screen picture behind everything. Decoded asynchronously off the UI thread at the size
+     * CENTER_CROP shows, cached statically in memory so returning home or waking from sleep costs 0ms I/O.
      */
     private void showWallpaper(File file) {
-        try {
-            android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
-            android.graphics.BitmapFactory.Options opts = new android.graphics.BitmapFactory.Options();
-            opts.inJustDecodeBounds = true;
-            android.graphics.BitmapFactory.decodeFile(file.getPath(), opts);
-            int w = opts.outWidth, h = opts.outHeight;
-            if (w <= 0 || h <= 0) return;
-            int sample = WallpaperSize.sampleSize(w, h, dm.widthPixels, dm.heightPixels);
-            // The limit applies to what is decoded, so a 12 MP photo still works once it is sampled down.
-            if (!WallpaperSize.accepted(w / sample, h / sample)) return;
-            opts.inJustDecodeBounds = false;
-            opts.inSampleSize = sample;
-            int[] scale = WallpaperSize.coverScale(w / sample, h / sample, dm.widthPixels, dm.heightPixels);
-            if (scale != null) {
-                opts.inScaled = true;
-                opts.inDensity = scale[0];
-                opts.inTargetDensity = scale[1];
-            }
-            opts.inPreferredConfig = android.graphics.Bitmap.Config.RGB_565;   // no alpha needed, half the memory
-            android.graphics.Bitmap bmp = android.graphics.BitmapFactory.decodeFile(file.getPath(), opts);
-            if (bmp == null) return;
-            android.widget.ImageView wall = new android.widget.ImageView(this);
-            wall.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
-            wall.setImageBitmap(bmp);
-            root.addView(wall, 0, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        } catch (Exception | OutOfMemoryError e) {
-            // A bad or huge picture must never take the home screen down; the plain colour stays.
+        if (file == null || !file.exists()) return;
+        if (wallpaperView == null) {
+            wallpaperView = new android.widget.ImageView(this);
+            wallpaperView.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+            root.addView(wallpaperView, 0, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         }
+
+        final String path = file.getPath();
+        final long lastMod = file.lastModified();
+
+        if (sCachedWallpaperBitmap != null && path.equals(sCachedWallpaperPath) && lastMod == sCachedWallpaperModified && !sCachedWallpaperBitmap.isRecycled()) {
+            wallpaperView.setImageBitmap(sCachedWallpaperBitmap);
+            return;
+        }
+
+        final int screenW = getResources().getDisplayMetrics().widthPixels;
+        final int screenH = getResources().getDisplayMetrics().heightPixels;
+
+        sWallpaperExecutor.execute(() -> {
+            try {
+                android.graphics.BitmapFactory.Options opts = new android.graphics.BitmapFactory.Options();
+                opts.inJustDecodeBounds = true;
+                android.graphics.BitmapFactory.decodeFile(path, opts);
+                int w = opts.outWidth, h = opts.outHeight;
+                if (w <= 0 || h <= 0) return;
+                int sample = WallpaperSize.sampleSize(w, h, screenW, screenH);
+                if (!WallpaperSize.accepted(w / sample, h / sample)) return;
+                opts.inJustDecodeBounds = false;
+                opts.inSampleSize = sample;
+                int[] scale = WallpaperSize.coverScale(w / sample, h / sample, screenW, screenH);
+                if (scale != null) {
+                    opts.inScaled = true;
+                    opts.inDensity = scale[0];
+                    opts.inTargetDensity = scale[1];
+                }
+                opts.inPreferredConfig = android.graphics.Bitmap.Config.RGB_565;   // no alpha needed, half the memory
+                final android.graphics.Bitmap bmp = android.graphics.BitmapFactory.decodeFile(path, opts);
+                if (bmp != null) {
+                    sCachedWallpaperBitmap = bmp;
+                    sCachedWallpaperPath = path;
+                    sCachedWallpaperModified = lastMod;
+                    runOnUiThread(() -> {
+                        if (wallpaperView != null && !isFinishing() && !isDestroyed()) {
+                            wallpaperView.setImageBitmap(bmp);
+                        }
+                    });
+                }
+            } catch (Exception | OutOfMemoryError ignored) {
+                // A bad or huge picture must never take the home screen down; the plain colour stays.
+            }
+        });
     }
 
     /**
@@ -600,8 +650,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         promptsPaused = false;
         tilesReady = false;
-        reloadApps(rebuildOnResume);
-        rebuildOnResume = false;
+        long now = android.os.SystemClock.elapsedRealtime();
+        if (adapter.appCount() == 0 || rebuildOnResume || (now - lastAppLoadTime > 3000)) {
+            reloadApps(rebuildOnResume);
+            lastAppLoadTime = now;
+            rebuildOnResume = false;
+        }
         updateGreeting();
         updateDateHeader();
         updateWifiLabel();
@@ -628,6 +682,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     /** Rebuilds the tiles (and the module cards), then puts focus back where it was. */
     private void reloadApps(boolean animate) {
+        lastAppLoadTime = android.os.SystemClock.elapsedRealtime();
         cancelPendingFocusScroll();
         RecyclerView.ViewHolder footer = grid.findViewHolderForAdapterPosition(adapter.appCount());
         final boolean restoreLibrary = adapter.isLibraryAt(adapter.appCount()) && footer != null
@@ -734,6 +789,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        try {
+            unregisterReceiver(userUnlockReceiver);
+        } catch (Exception ignored) {}
         ConnectivityManager cm = getSystemService(ConnectivityManager.class);
         TvInputManager tim = (TvInputManager) getSystemService(TV_INPUT_SERVICE);
         if (tim != null) tim.unregisterCallback(inputCallback);

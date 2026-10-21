@@ -120,9 +120,61 @@ final class Config {
         this.festival = festival;
     }
 
-    /** The folder the theme tools push into; null when external storage is unavailable. */
+    static File getDeviceProtectedDir(Context ctx) {
+        try {
+            Context deCtx = ctx.createDeviceProtectedStorageContext();
+            File deFiles = deCtx.getFilesDir();
+            if (deFiles != null && !deFiles.exists()) {
+                deFiles.mkdirs();
+            }
+            return deFiles;
+        } catch (Throwable t) {
+            Log.w(TAG, "Failed to get device protected storage dir: " + t.getMessage());
+            return null;
+        }
+    }
+
+    /** The folder the theme tools push into; falls back to device-protected storage during direct boot. */
     static File dir(Context ctx) {
-        return ctx.getExternalFilesDir(null);
+        File ext = ctx.getExternalFilesDir(null);
+        if (ext != null && ext.exists()) {
+            return ext;
+        }
+        return getDeviceProtectedDir(ctx);
+    }
+
+    static void mirrorToDeviceProtectedStorage(Context ctx) {
+        try {
+            android.os.UserManager um = (android.os.UserManager) ctx.getSystemService(Context.USER_SERVICE);
+            if (um != null && !um.isUserUnlocked()) {
+                return;
+            }
+            File extDir = ctx.getExternalFilesDir(null);
+            File deDir = getDeviceProtectedDir(ctx);
+            if (extDir == null || deDir == null || !extDir.exists()) {
+                return;
+            }
+            copyIfDifferent(new File(extDir, FILE_NAME), new File(deDir, FILE_NAME));
+            copyIfDifferent(new File(extDir, WALLPAPER_NAME), new File(deDir, WALLPAPER_NAME));
+        } catch (Throwable t) {
+            Log.w(TAG, "Error mirroring to DE storage: " + t.getMessage());
+        }
+    }
+
+    private static void copyIfDifferent(File src, File dest) {
+        if (src == null || !src.exists()) return;
+        if (dest.exists() && dest.length() == src.length() && dest.lastModified() >= src.lastModified()) {
+            return;
+        }
+        try (InputStream in = new FileInputStream(src);
+             java.io.OutputStream out = new java.io.FileOutputStream(dest)) {
+            byte[] buf = new byte[8192];
+            int len;
+            while ((len = in.read(buf)) > 0) {
+                out.write(buf, 0, len);
+            }
+            dest.setLastModified(src.lastModified());
+        } catch (Throwable ignored) {}
     }
 
     static Config load(Context ctx) {
@@ -158,6 +210,15 @@ final class Config {
 
         File dir = dir(ctx);
         File file = dir != null ? new File(dir, FILE_NAME) : null;
+        if (file == null || !file.exists()) {
+            File deDir = getDeviceProtectedDir(ctx);
+            if (deDir != null) {
+                File deFile = new File(deDir, FILE_NAME);
+                if (deFile.exists()) {
+                    file = deFile;
+                }
+            }
+        }
         JSONObject json = read(file);
         if (json != null) {
             applied = true;
@@ -191,13 +252,23 @@ final class Config {
         }
         // A theme push or reset invalidates choices made on the TV. On first use, remember the
         // current theme without clearing choices from an older launcher version.
-        SharedPreferences choices = ctx.getSharedPreferences(SETTINGS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences choices = ctx.createDeviceProtectedStorageContext().getSharedPreferences(SETTINGS_NAME, Context.MODE_PRIVATE);
         syncThemeChoices(choices, dir, file);
         int chosenColumns = choices.getInt("columns", columns);
         if (chosenColumns >= 4 && chosenColumns <= 7) columns = chosenColumns;
         animations = choices.getBoolean("animations", animations);
         advancedEffects = choices.getBoolean("advanced_effects", advancedEffects);
         File wallpaper = dir != null ? new File(dir, WALLPAPER_NAME) : null;
+        if (wallpaper == null || !(wallpaper.isFile() && wallpaper.length() > 0)) {
+            File deDir = getDeviceProtectedDir(ctx);
+            if (deDir != null) {
+                File deWallpaper = new File(deDir, WALLPAPER_NAME);
+                if (deWallpaper.isFile() && deWallpaper.length() > 0) {
+                    wallpaper = deWallpaper;
+                }
+            }
+        }
+        if (wallpaper != null && !(wallpaper.isFile() && wallpaper.length() > 0)) wallpaper = null;
         if (wallpaper != null && !(wallpaper.isFile() && wallpaper.length() > 0)) wallpaper = null;
         // A theme can also switch the wallpaper off while the file is still there.
         if (json != null && json.has("wallpaper") && !bool(json, "wallpaper", true)) wallpaper = null;
