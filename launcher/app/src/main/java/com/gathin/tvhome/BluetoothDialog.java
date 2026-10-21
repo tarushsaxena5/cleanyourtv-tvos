@@ -59,8 +59,11 @@ public class BluetoothDialog {
             List<BluetoothHelper.DeviceInfo> saved = new ArrayList<>();
 
             for (BluetoothHelper.DeviceInfo d : all) {
-                if (d.isConnected) connected.add(d);
-                else saved.add(d);
+                if (d.isConnected) {
+                    if (!d.isRemote) connected.add(d);
+                } else {
+                    saved.add(d);
+                }
             }
 
             if (connected.isEmpty() && saved.isEmpty()) {

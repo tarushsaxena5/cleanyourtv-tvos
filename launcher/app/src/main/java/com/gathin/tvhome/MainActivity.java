@@ -835,7 +835,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     public boolean dispatchKeyEvent(KeyEvent event) {
         if (event.getAction() == KeyEvent.ACTION_DOWN) {
             int keyCode = event.getKeyCode();
-            if (keyCode == KeyEvent.KEYCODE_SETTINGS || keyCode == 176) {
+            if (keyCode == KeyEvent.KEYCODE_SETTINGS || keyCode == 176 || keyCode == KeyEvent.KEYCODE_MENU
+                    || keyCode == 82 || keyCode == 83 || keyCode == 285 || keyCode == 257) {
                 try {
                     Intent intent = new Intent(android.provider.Settings.ACTION_SETTINGS);
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -2136,31 +2137,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     private String formatBluetoothName(String rawName) {
-        if (rawName == null || rawName.trim().isEmpty()) return "Bluetooth";
-        
-        // Clean out leading/trailing whitespace
-        String clean = rawName.trim();
-        
-        // Split into words
-        String[] words = clean.split("\\s+");
-        
-        // If 1, 2, or 3 words total and fits within 22 characters, show them all
-        if (words.length <= 3 && clean.length() <= 22) {
-            return clean;
-        }
-        
-        // Otherwise, take the first 2 or 3 complete words without breaking words mid-way
-        StringBuilder sb = new StringBuilder();
-        int count = Math.min(words.length, 3);
-        for (int i = 0; i < count; i++) {
-            if (i > 0) sb.append(" ");
-            sb.append(words[i]);
-            // Stop if we have 2 words and adding another makes it excessively long (>20 chars)
-            if (i >= 1 && sb.length() >= 16) {
-                break;
-            }
-        }
-        return sb.toString();
+        if (rawName == null || rawName.trim().isEmpty()) return getString(R.string.bluetooth);
+        return rawName.trim();
     }
 
     private void updateBluetoothPill() {

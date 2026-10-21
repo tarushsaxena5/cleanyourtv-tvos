@@ -130,5 +130,18 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/input_key_service" />
         </service>
+
+        <!-- Trampoline receiver for global settings key broadcasts and vendor shortcut intents -->
+        <receiver
+            android:name=".SettingsTrampolineReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.android.tv.action.OPEN_NOTIFICATIONS_PANEL" />
+                <action android:name="android.intent.action.PANEL_SETTINGS" />
+                <action android:name="com.google.android.tv.action.SETTINGS" />
+                <action android:name="com.smartdevice.action.SHORTCUT" />
+                <action android:name="com.smartdevice.dailyshortcut.SHOW" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

@@ -33,9 +33,13 @@ public class HomeKeyService extends AccessibilityService {
     }
 
     private boolean isSettingsKey(KeyEvent event) {
-        if (event.getKeyCode() == KeyEvent.KEYCODE_SETTINGS) return true;
-        for (int code : settingsScancodes) if (event.getScanCode() == code) return true;
-        for (int code : settingsKeycodes) if (event.getKeyCode() == code) return true;
+        int code = event.getKeyCode();
+        if (code == KeyEvent.KEYCODE_SETTINGS || code == 176 || code == KeyEvent.KEYCODE_MENU
+                || code == 82 || code == 83 || code == 285 || code == 257) {
+            return true;
+        }
+        for (int sc : settingsScancodes) if (event.getScanCode() == sc) return true;
+        for (int kc : settingsKeycodes) if (code == kc) return true;
         return false;
     }
 
@@ -44,9 +48,19 @@ public class HomeKeyService extends AccessibilityService {
         // The stock launcher handled the remote's Settings button; with it disabled the button does nothing.
         if (isSettingsKey(event)) {
             if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) {
-                Intent open = settingsPanel ? new Intent(this, QuickSettingsActivity.class)
-                        : new Intent(Settings.ACTION_SETTINGS);
-                startActivity(open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                try {
+                    Intent open = settingsPanel ? new Intent(this, QuickSettingsActivity.class)
+                            : new Intent(Settings.ACTION_SETTINGS);
+                    startActivity(open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                } catch (Exception e) {
+                    try {
+                        Intent fallback = getPackageManager().getLaunchIntentForPackage("com.android.tv.settings");
+                        if (fallback != null) {
+                            fallback.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(fallback);
+                        }
+                    } catch (Exception ignored) {}
+                }
             }
             return true;
         }

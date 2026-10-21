@@ -194,17 +194,24 @@ public class BluetoothHelper {
 
     public static boolean isRemoteDevice(BluetoothDevice device) {
         if (device == null) return false;
+        if (isAudioDevice(device)) return false;
         try {
             String name = device.getName();
             if (name != null) {
                 String lower = name.toLowerCase(Locale.ROOT);
-                if (lower.contains("remote") || lower.contains("controller")) return true;
+                if (lower.contains("remote") || lower.contains("controller")
+                        || lower.contains("ble") || lower.contains("tv ble") || lower.contains("rc-")) {
+                    return true;
+                }
             }
         } catch (SecurityException ignored) {}
 
         try {
             BluetoothClass btClass = device.getBluetoothClass();
             if (btClass != null) {
+                if (btClass.getMajorDeviceClass() == BluetoothClass.Device.Major.PERIPHERAL) {
+                    return true;
+                }
                 int dc = btClass.getDeviceClass();
                 if (dc == BluetoothClass.Device.PERIPHERAL_KEYBOARD
                         || dc == BluetoothClass.Device.PERIPHERAL_POINTING
@@ -282,7 +289,7 @@ public class BluetoothHelper {
     public DeviceInfo getActivePillDevice() {
         List<DeviceInfo> all = getAllBondedDevices();
         for (DeviceInfo d : all) {
-            if (d.isConnected && d.isAudio) return d;
+            if (d.isConnected && d.isAudio && !d.isRemote) return d;
         }
         for (DeviceInfo d : all) {
             if (d.isConnected && !d.isRemote) return d;
