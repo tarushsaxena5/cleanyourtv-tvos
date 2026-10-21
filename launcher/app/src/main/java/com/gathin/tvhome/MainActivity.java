@@ -69,10 +69,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -111,6 +113,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private TextView greeting;
     private View btnInputs;
     private TextView btnWifi;
+    private TextView btnBluetooth;
+    private BluetoothHelper bluetoothHelper;
+    private TextView tvDay, tvFullDate;
     private TextView shamsiDate;
     private TextView stats;
     /** config.xml show_stats, overridable by a theme. Off: the line is gone and nothing is read. */
@@ -230,6 +235,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         @Override
         public void run() {
             updateGreeting();
+            updateDateHeader();
             updateWifiLabel();
             sky.update();
             handler.postDelayed(this, MINUTE_MS);
@@ -281,17 +287,19 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         greeting = findViewById(R.id.greeting);
         greetingColor = greeting.getCurrentTextColor();
         btnWifi = findViewById(R.id.btnWifi);
+        btnBluetooth = findViewById(R.id.btnBluetooth);
+        bluetoothHelper = new BluetoothHelper(this, this::updateBluetoothPill);
+        tvDay = findViewById(R.id.tvDay);
+        tvFullDate = findViewById(R.id.tvFullDate);
         shamsiDate = findViewById(R.id.shamsiDate);
         stats = findViewById(R.id.stats);
         showStats = cfg.showStats;
         shamsi = cfg.shamsiDate;
         greetingName = cfg.greetingName;
-        if (shamsi) {
+        if (shamsi && shamsiDate != null) {
             shamsiDate.setVisibility(View.VISIBLE);
-            TextView date = findViewById(R.id.date);
-            date.setTextSize(11f);
-            date.setPadding(0, (int) (4 * density), 0, 0);
         }
+        updateDateHeader();
         vpnApp = cfg.vpnApp;
         moduleCards = cfg.moduleCards;
         hiddenApps = new HashSet<>(cfg.hiddenApps);
@@ -436,6 +444,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             open(systemIntent(Settings.ACTION_WIFI_SETTINGS));
             return true;
         });
+        btnBluetooth.setOnClickListener(v -> showBluetoothMenu());
+        btnBluetooth.setOnLongClickListener(v -> {
+            BluetoothHelper.launchPairing(this);
+            return true;
+        });
         btnSettings.setOnClickListener(v -> open(systemIntent(Settings.ACTION_SETTINGS)));
         btnReorder = findViewById(R.id.btnReorder);
         btnReorder.setOnClickListener(v -> toggleReorder());
@@ -456,18 +469,21 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 focusTile(lastFocused % COLUMNS);
                 return true;
             }
-            int firstButton = btnWifi.getVisibility() == View.VISIBLE ? R.id.btnWifi : (btnInputs.getVisibility() == View.VISIBLE ? R.id.btnInputs : R.id.btnReorder);
+            int firstButton = btnBluetooth.getVisibility() == View.VISIBLE ? R.id.btnBluetooth
+                    : (btnWifi.getVisibility() == View.VISIBLE ? R.id.btnWifi
+                    : (btnInputs.getVisibility() == View.VISIBLE ? R.id.btnInputs : R.id.btnReorder));
             int leftButton = rtlMenuBar ? R.id.btnSettings : firstButton;
             int rightButton = rtlMenuBar ? firstButton : R.id.btnSettings;
             if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) return v.getId() == leftButton;
             return keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && v.getId() == rightButton;
         };
-        btnInputs.setOnKeyListener(pillKeys);
+        btnBluetooth.setOnKeyListener(pillKeys);
         btnWifi.setOnKeyListener(pillKeys);
-        btnSettings.setOnKeyListener(pillKeys);
+        btnInputs.setOnKeyListener(pillKeys);
         btnReorder.setOnKeyListener(pillKeys);
+        btnSettings.setOnKeyListener(pillKeys);
         if (advancedEffects) {
-            for (View button : new View[]{btnInputs, btnWifi, btnReorder, btnSettings}) {
+            for (View button : new View[]{btnBluetooth, btnWifi, btnInputs, btnReorder, btnSettings}) {
                 button.setOnFocusChangeListener((view, focused) -> view.animate()
                         .scaleX(focused ? 1.04f : 1f).scaleY(focused ? 1.04f : 1f)
                         .setDuration(160).start());
@@ -563,6 +579,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onStart() {
         super.onStart();
+        if (bluetoothHelper != null) {
+            bluetoothHelper.start();
+            updateBluetoothPill();
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(packageReceiver, packageFilter, Context.RECEIVER_NOT_EXPORTED);
         } else {
@@ -583,7 +603,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         reloadApps(rebuildOnResume);
         rebuildOnResume = false;
         updateGreeting();
+        updateDateHeader();
         updateWifiLabel();
+        updateBluetoothPill();
         updateInputsButton();
         if (showStats) startStats();
         sky.update();
@@ -695,6 +717,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onStop() {
         super.onStop();
+        if (bluetoothHelper != null) bluetoothHelper.stop();
         unregisterReceiver(packageReceiver);
         rebuildOnResume = true;
     }
@@ -752,6 +775,26 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      */
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+            int keyCode = event.getKeyCode();
+            if (keyCode == KeyEvent.KEYCODE_SETTINGS || keyCode == 176) {
+                try {
+                    Intent intent = new Intent(android.provider.Settings.ACTION_SETTINGS);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                    return true;
+                } catch (Exception e) {
+                    try {
+                        Intent fallback = getPackageManager().getLaunchIntentForPackage("com.android.tv.settings");
+                        if (fallback != null) {
+                            fallback.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(fallback);
+                            return true;
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
         if (handleSettingsKey(event)) return true;
         if (!reordering) return super.dispatchKeyEvent(event);
         boolean down = event.getAction() == KeyEvent.ACTION_DOWN;
@@ -2023,6 +2066,48 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         });
         openPopup = popup;
         return popup;
+    }
+
+    void setOpenPopup(PopupWindow popup) {
+        if (openPopup != null && openPopup != popup) openPopup.dismiss();
+        openPopup = popup;
+    }
+
+    private void showBluetoothMenu() {
+        BluetoothDialog.show(this, btnBluetooth, bluetoothHelper);
+    }
+
+    private void updateBluetoothPill() {
+        if (btnBluetooth == null || bluetoothHelper == null) return;
+        BluetoothHelper.DeviceInfo active = bluetoothHelper.getActivePillDevice();
+        if (active != null) {
+            String label = active.name;
+            if (label.length() > 16) {
+                label = label.substring(0, 14) + "…";
+            }
+            if (active.isAudio) {
+                btnBluetooth.setText(label);
+                btnBluetooth.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_headset, 0, 0, 0);
+            } else {
+                btnBluetooth.setText(label);
+                btnBluetooth.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_bluetooth_connected, 0, 0, 0);
+            }
+        } else {
+            btnBluetooth.setText(R.string.bluetooth);
+            btnBluetooth.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_bluetooth, 0, 0, 0);
+        }
+    }
+
+    private void updateDateHeader() {
+        Date now = new Date();
+        SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE", Locale.ENGLISH);
+        String dayString = dayFormat.format(now).toUpperCase(Locale.ENGLISH); // e.g., "WEDNESDAY"
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("d MMMM yyyy", Locale.ENGLISH);
+        String dateString = dateFormat.format(now); // e.g., "21 October 2026"
+
+        if (tvDay != null) tvDay.setText(dayString);
+        if (tvFullDate != null) tvFullDate.setText(dateString);
     }
 
     /** Drop in: fade and unfold from the top edge, hanging under the anchor pill. */

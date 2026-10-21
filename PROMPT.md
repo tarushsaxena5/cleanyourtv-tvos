@@ -47,6 +47,9 @@ Please work directly on the device, step-by-step, verifying everything you do wi
   * 2-stop translucent specular glass highlight placed strictly behind icons with a 1dp rim light.
   * True borderless Floating Dock: no heavy container box shelf. Auto-populates 4 dock tiles from installed streaming apps (SmartTube, YouTube, Netflix, Disney+, Hotstar, Prime Video, Plex, Kodi).
   * Dual-Category Discovery: queries both LEANBACK and standard LAUNCHER categories with live BroadcastReceiver auto-refresh on Play Store installs.
+  * Apple tvOS Clock & Date Lockup: 46sp bold digital time, frosted vertical divider, stacked full uppercase weekday (e.g. WEDNESDAY) and full date & year with zero text truncation.
+  * Dynamic Bluetooth Control Center & Frosted Quick Menu: Live connection pill in top header; 1-click frosted glass popup to connect, disconnect, unpair, or pair new accessories.
+  * Hardware Remote Settings Shortcut: Direct KEYCODE_SETTINGS (code 176) hardware key interception launching system settings in ~230ms.
   * On-Screen Remote Customization: long-press remote OK/Select opens menu to Pin/Unpin, Move, Hide/Unhide, and view App Info directly on TV.
   * Universal Crash-Proof Inputs: TvInputManager HDMI switcher with defensive OEM fallback intents and Toast handling.
   * Native 4K UHD Static Wallpaper Engine: 25 MP cap raised, zero color flickering, with dark obsidian radial gradient fallback.

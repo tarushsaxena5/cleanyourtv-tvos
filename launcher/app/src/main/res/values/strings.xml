@@ -3,6 +3,16 @@
     <string name="app_name">Home</string>
     <string name="inputs">Inputs</string>
     <string name="wifi">Wi-Fi</string>
+    <string name="bluetooth">Bluetooth</string>
+    <string name="bluetooth_menu_title">Bluetooth Accessories</string>
+    <string name="bluetooth_connected_section">Connected</string>
+    <string name="bluetooth_paired_section">Saved Accessories</string>
+    <string name="pair_new_accessory">Pair New Accessory</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="connect">Connect</string>
+    <string name="unpair">Unpair / Forget</string>
+    <string name="no_paired_devices">No saved Bluetooth devices</string>
+    <string name="bluetooth_off">Bluetooth is turned off</string>
     <string name="settings">Settings</string>
     <string name="choose_input">Inputs</string>
     <string name="connected">Connected</string>

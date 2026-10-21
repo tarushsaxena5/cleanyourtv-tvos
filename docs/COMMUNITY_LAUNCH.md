@@ -31,11 +31,14 @@ So we built **CleanYourTV Pro — Apple tvOS Edition**:
 
 ### 🌟 What we engineered:
 1. **Authentic Apple tvOS Focus Engine:** 1.10x elevation scale pop, 220ms smooth decelerate ease-out, continuous 18dp squircles, and 2-stop specular rim lighting behind cards (not muddy grey overlays).
-2. **True Borderless Floating Dock:** Removed the bulky dark container shelf; app tiles float cleanly over your backdrop. Auto-populates missing slots from popular streaming apps out-of-the-box.
-3. **100% Static 4K UHD Wallpaper Engine:** Raised the memory cap to 25 MP so native 3840x2160 UHD wallpapers render pin-sharp without color-shifting or ambient flicker.
-4. **Dual-Category App Discovery:** Unifies official Leanback TV apps and sideloaded Android APKs, with automatic live refresh when installing apps from the Play Store.
-5. **On-Screen Remote Customization:** Long-press `OK` on any app to Pin/Unpin, Move, Hide/Unhide, or view App Info directly from your couch.
-6. **Built-in Safe Debloat Suite:** Freezes 27+ manufacturer telemetry loops (`pm disable-user`) with an automatic snapshot for 1-click instant factory rollback. Zero files deleted, zero root needed.
+2. **Apple tvOS Control Center & Quick Menu:** Dynamic Bluetooth header pill displaying active devices + 1-click frosted glass popup to connect, disconnect, unpair, or pair accessories without digging into system settings.
+3. **Apple tvOS Clock & Date Lockup:** 46sp bold digital time with frosted vertical hairline divider, stacked full uppercase weekday (`WEDNESDAY`) and full date & year (`21 October 2026`) with zero text clipping.
+4. **True Borderless Floating Dock:** Removed the bulky dark container shelf; app tiles float cleanly over your backdrop. Auto-populates missing slots from popular streaming apps out-of-the-box.
+5. **100% Static 4K UHD Wallpaper Engine:** Raised the memory cap to 25 MP so native 3840x2160 UHD wallpapers render pin-sharp without color-shifting or ambient flicker.
+6. **Dual-Category App Discovery:** Unifies official Leanback TV apps and sideloaded Android APKs, with automatic live refresh when installing apps from the Play Store.
+7. **On-Screen Remote Customization:** Long-press `OK` on any app to Pin/Unpin, Move, Hide/Unhide, or view App Info directly from your couch.
+8. **Hardware Remote Settings Interception:** Instant ~230ms launch of TV system settings via hardware `KEYCODE_SETTINGS` (code 176).
+9. **Built-in Safe Debloat Suite:** Freezes 27+ manufacturer telemetry loops (`pm disable-user`) with an automatic snapshot for 1-click instant factory rollback. Zero files deleted, zero root needed.
 
 ### 📊 Real Benchmarks (Tested on 4K QLED):
 - **Launcher RAM Footprint:** Down from ~350 MB to **56 MB** (↓ 62% reduction!)
