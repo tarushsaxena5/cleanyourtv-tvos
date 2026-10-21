@@ -250,12 +250,12 @@ The fastest automated Windows method for non-developers:
 
 ### 🟢 Method 3: Direct TV Install via USB Drive or "Downloader" App (No PC Required — 60 Seconds)
 
-1. **Download APK:** Grab the latest `CleanYourTV-tvOS-v1.0.0.apk` from the **[Releases](https://github.com/tarushsaxena5/cleanyourtv-tvos/releases)** tab.
+1. **Download APK:** Grab the latest `CleanYourTV-tvOS-v1.1.0.apk` from the **[Releases](https://github.com/tarushsaxena5/cleanyourtv-tvos/releases)** tab.
 2. **Transfer to TV:**
    - Put it on a USB flash drive and plug it into your TV, **OR**
    - Open the free **Downloader by AFTVnews** app on your TV and enter the direct download link:
      ```
-     https://github.com/tarushsaxena5/cleanyourtv-tvos/releases/latest/download/CleanYourTV-tvOS-v1.0.0.apk
+     https://github.com/tarushsaxena5/cleanyourtv-tvos/releases/latest/download/CleanYourTV-tvOS-v1.1.0.apk
      ```
 3. **Install:** Click the APK, select **Install**, and grant permissions if prompted.
 4. **Set as Default:** Press the **Home** button on your remote $\rightarrow$ select **CleanYourTV** $\rightarrow$ choose **Always**.
