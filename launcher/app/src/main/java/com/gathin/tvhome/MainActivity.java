@@ -2077,14 +2077,39 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         BluetoothDialog.show(this, btnBluetooth, bluetoothHelper);
     }
 
+    private String formatBluetoothName(String rawName) {
+        if (rawName == null || rawName.trim().isEmpty()) return "Bluetooth";
+        
+        // Clean out leading/trailing whitespace
+        String clean = rawName.trim();
+        
+        // Split into words
+        String[] words = clean.split("\\s+");
+        
+        // If 1, 2, or 3 words total and fits within 22 characters, show them all
+        if (words.length <= 3 && clean.length() <= 22) {
+            return clean;
+        }
+        
+        // Otherwise, take the first 2 or 3 complete words without breaking words mid-way
+        StringBuilder sb = new StringBuilder();
+        int count = Math.min(words.length, 3);
+        for (int i = 0; i < count; i++) {
+            if (i > 0) sb.append(" ");
+            sb.append(words[i]);
+            // Stop if we have 2 words and adding another makes it excessively long (>20 chars)
+            if (i >= 1 && sb.length() >= 16) {
+                break;
+            }
+        }
+        return sb.toString();
+    }
+
     private void updateBluetoothPill() {
         if (btnBluetooth == null || bluetoothHelper == null) return;
         BluetoothHelper.DeviceInfo active = bluetoothHelper.getActivePillDevice();
         if (active != null) {
-            String label = active.name;
-            if (label.length() > 16) {
-                label = label.substring(0, 14) + "…";
-            }
+            String label = formatBluetoothName(active.name);
             if (active.isAudio) {
                 btnBluetooth.setText(label);
                 btnBluetooth.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_headset, 0, 0, 0);
